@@ -1,0 +1,22 @@
+{
+  "name": "d3-flame-graph",
+  "version": "0.1.0",
+  "description": "Flame graph visualisation d3 plugin",
+  "main": "d3-flame-graph.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "keywords": [
+    "d3",
+    "flame",
+    "graph",
+    "visualization",
+    "d3",
+    "plugin"
+  ],
+  "author": "Alex Ciminian",
+  "license": "MIT",
+  "dependencies": {
+    "d3": "^3.5.6"
+  }
+}

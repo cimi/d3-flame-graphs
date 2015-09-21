@@ -17,7 +17,7 @@ constants =
   RY : 2,
   TOOLTIP_OFFSET: 3,
   EM_OF_FLAME_BAR: 0.5,
-  EM_OF_LABEL_HEIGHT: ".35em"
+  EM_OF_LABEL_HEIGHT: ".25em"
 
 convert = (rawData) ->
   value = 0
@@ -127,13 +127,15 @@ d3.flameGraph = ->
         .enter()
           .append('rect')
             .attr('class', 'node')
-            .attr('width', (d) => @rangeX(d.dx))
-            .attr('height', (d) => @cellHeight)
+            .attr 'width', (d) =>
+              width = @rangeX(d.dx)
+              if width > 4 then width - 2 else width
+            .attr('height', (d) => @cellHeight - 2)
             .attr('x', (d) => @rangeX(d.x))
             .attr('y', (d) => @y(d.y))
-            .attr('rx', constants.RX)
-            .attr('ry', constants.RY)
-            .attr('stroke', 'blue')
+            # .attr('rx', constants.RX)
+            # .attr('ry', constants.RY)
+            .attr('stroke', (d) -> randomizeColor(constants.FLAME_RGB))
             .attr('fill', (d) -> if d.color then d.color else randomizeColor(constants.FLAME_RGB))
             .attr('fill-opacity', '0.8')
 

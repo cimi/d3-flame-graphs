@@ -1,23 +1,11 @@
-someVar = 1
 d3 = window.d3
 _ = window._
 
 constants =
-  WIDTH_TO_HEIGHT_RATIO : 0.4,
-  POS_FLAME_RGB : [ 254, 86, 67 ],
-  NEG_FLAME_RGB : [ 0, 200, 0 ],
-  EQ_FLAME_RGB : [ 198, 198, 143 ],
-  FLAME_DIFFERENTIAL : 40.0,
-  FLAME_RGB : [ 200, 125, 50 ],
   TOOLTIP_BORDER_COLOR_PLUS : '#FFB2B2',
   TOOLTIP_BORDER_COLOR_MINUS : '#99D699',
   TOOLTIP_BORDER_COLOD_DEFAULT : '#DDD',
-  MIN_LABEL_WIDTH : 40,
-  RX : 2,
-  RY : 2,
-  TOOLTIP_OFFSET: 3,
-  EM_OF_FLAME_BAR: 0.5,
-  EM_OF_LABEL_HEIGHT: ".25em"
+  TOOLTIP_OFFSET: 3
 
 convert = (rawData) ->
   value = 0
@@ -53,17 +41,6 @@ convert = (rawData) ->
 
   node
 
-rgbToHex = (red, green, blue) ->
-  '#' + ((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).substr(1)
-
-randomizeColor = (rgb) ->
-    # generates a random integer between -FLAME_DIFF / 2 and FLAME_DIFF / 2
-    offset = (color) ->
-      color + Math.round((Math.random() * constants.FLAME_DIFFERENTIAL) - (constants.FLAME_DIFFERENTIAL * 0.5))
-
-    "rgb(#{offset(rgb[0])}, #{offset(rgb[1])}, #{offset(rgb[2])})"
-
-maxY = 0
 maxDepth = (node) ->
   return 0 if not node
   return 1 if not node.children
@@ -72,23 +49,37 @@ maxDepth = (node) ->
   node.children.forEach (child) ->
     depth = maxDepth(child)
     max = depth if depth > max
-    maxY = child.y if child.y > maxY
 
   return max + 1
+
+
+getLastTwoTokens = (str) ->
+  tokens = str.split(".")
+  tokens.slice(tokens.length - 2).join(".")
 
 d3.flameGraph = ->
 
   class FlameGraph
-    constructor: (@containerId) ->
-      @_generateAccessors(['width', 'height'])
+    constructor: () ->
+      @_generateAccessors([
+        'width',
+        'height',
+        'cellHeight',
+        'containerId',
+        'colorScheme'])
       @_allData = []
 
     data: (data) ->
       return @_data if not data
       @_allData.push(data)
 
+      @_data = d3.layout.partition()
+        .sort((a,b) -> a.name.localeCompare(b.name))
+        .nodes(data)
+      @
+
+    breadcrumbs: () ->
       breadcrumbData = @_allData.map((prevData, idx) -> { name: prevData.name, value: idx })
-      console.log(breadcrumbData)
       breadcrumbs = d3.select('.breadcrumb')
         .selectAll('li')
         .data(breadcrumbData)
@@ -96,62 +87,46 @@ d3.flameGraph = ->
       breadcrumbs.enter()
         .append('li')
           .append('a')
-          .text((d) -> "#{d.name}")
+          .text((d) -> getLastTwoTokens(d.name))
           .on 'click', (breadcrumb) =>
             idx = breadcrumb.value
             displayed = @_allData[idx]
             @_allData = @_allData.slice(0, idx)
-            @data(displayed)
-              .render()
-              .interactivity()
+            @data(displayed).render()
 
       breadcrumbs.exit().remove()
-
-
-      @_data = d3.layout.partition()
-        .sort((a,b) -> a.name.localeCompare(b.name))
-        .nodes(data)
       @
 
     getLabelText: (label, dx) ->
       return "" if not label
-      shortLabel = label;
+      shortLabel = getLastTwoTokens(label)
+      maxLength = Math.round(@x(dx) / 4)
+      return shortLabel.substr(0, maxLength)
 
-      if (shortLabel.indexOf(".") != -1)
-        delimiter = "."
-        tokens = label.split(delimiter)
-        length = tokens.length
-        shortLabel = [tokens[length - 2], tokens[length - 1]].join(delimiter)
-
-        ratio = 4
-        maxLength = Math.round(@x(dx) / ratio)
-        return shortLabel.substr(0, maxLength)
+    color: (d) -> @colorScheme()[Math.floor(Math.random() * @colorScheme().length)]
 
     render: () ->
       # compute height dynamically so the fixed unit is the height of a cell
       console.time('rendering')
 
-      d3.select(@containerId)
+      d3.select(@containerId())
         .select('svg').remove()
-      @container = d3.select(@containerId)
+
+      @container = d3.select(@containerId())
         .append('svg')
           .attr('width', @width())
           .attr('height', @height())
 
-      @container.selectAll('.node', '.label').remove()
-
-      @cellHeight  = 10
-      @maxCells    = Math.floor(@height() / @cellHeight)
+      @maxCells    = Math.floor(@height() / @cellHeight())
 
       depth = maxDepth(@data()[0])
       @x = d3.scale.linear()
         .domain([0, d3.max(@data(), (d) -> d.x + d.dx)])
         .range([0, @width()])
       @y = d3.scale.quantize()
-        .domain([0, maxY])
-        .range(d3.range(depth, 0, -1)
-          .map((cell) =>  (cell  - depth - 1 + @maxCells) * @cellHeight))
-
+        .domain([d3.max(@data(), (d) -> d.y), 0])
+        .range(d3.range(depth)
+          .map((cell) =>  (cell  - depth + @maxCells) * @cellHeight()))
 
       @container
         .selectAll('.node')
@@ -161,40 +136,32 @@ d3.flameGraph = ->
           .append('rect')
             .attr('class', 'node')
             .attr 'width', (d) => @x(d.dx)
-            .attr('height', (d) => @cellHeight - 2)
+            .attr('height', (d) => @cellHeight() - 2)
             .attr('x', (d) => @x(d.x))
             .attr('y', (d) => @y(d.y))
-            # .attr('rx', constants.RX)
-            # .attr('ry', constants.RY)
-            .attr('stroke', (d) -> randomizeColor(constants.FLAME_RGB))
-            .attr('fill', (d) -> if d.color then d.color else randomizeColor(constants.FLAME_RGB))
+            .attr('stroke', "#bd0026")
+            .attr('fill', (d) => console.log(@color(d)); @color(d))
             .attr('fill-opacity', '0.8')
 
       @container
         .selectAll('.label')
-        .data(@data().filter((d) => d.name and @x(d.dx) > constants.MIN_LABEL_WIDTH))
+        .data(@data().filter((d) => d.name and @x(d.dx) > 40))
         .enter()
           .append('text')
             .attr('class', 'label')
             .attr('text-anchor', 'middle')
-            .attr('dy', constants.EM_OF_LABEL_HEIGHT)
+            .attr('dy', '.25em')
             .attr('x', (d) => @x(d.x) + @x(d.dx) / 2)
-            .attr('y', (d) => @y(d.y) + @cellHeight / 2)
+            .attr('y', (d) => @y(d.y) + @cellHeight() / 2)
             .text((d) => @getLabelText(d.name, d.dx))
-          # .on("mouseover", (d) -> @onMouseover(d))
-          # .on("mousemove", (d) -> @onMousemove())
-          # .on("mouseout", (d) -> @onMouseout())
-          # .on("click", (d) -> if (!d3.event.defaultPrevented) then @onSetRootCallback(d.location))
 
       console.timeEnd('rendering')
       console.log("Rendered #{@container.selectAll('.node')[0].length} elements")
-      return @
+      return @breadcrumbs().interactivity()
 
     interactivity: () ->
       console.time('interactivity')
-      clickHandler = (d) =>
-          console.log(d.y, @y(d.y))
-          @data(d).render().interactivity()
+      clickHandler = (d) => @data(d).render()
 
       @container
         .selectAll('.node')
@@ -203,7 +170,6 @@ d3.flameGraph = ->
       @container
         .selectAll('.label')
         .on 'click', clickHandler
-
       console.timeEnd('interactivity')
       @
 
@@ -215,10 +181,13 @@ d3.flameGraph = ->
             @["_#{accessor}"] = newValue
             return @
 
-  return new FlameGraph('#d3-flame-graph').width(1200).height(600)
+  return new FlameGraph()
 
 d3.json "data/profile-large.json", (err, data) ->
   window.flameGraph = d3.flameGraph()
-  flameGraph.data(convert(data.profile))
+  flameGraph
+    .containerId('#d3-flame-graph')
+    .width(1200).height(600).cellHeight(10)
+    .data(convert(data.profile))
+    .colorScheme(["#ffffcc","#ffeda0","#fed976","#feb24c","#fd8d3c","#fc4e2a","#e31a1c","#bd0026"])
     .render()
-    .interactivity()

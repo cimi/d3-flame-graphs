@@ -14,6 +14,10 @@
   .node, .label {
     cursor: pointer;
   }
+  .nav .breadcrumb {
+    float: left;
+    margin: 7px 10px;
+  }
   </style>
 </head>
 <body>
@@ -26,11 +30,11 @@
       <a class="navbar-brand" href="#">
         <i class="fa fa-bar-chart"></i>
       </a>
-
     </div>
     <div class="collapse navbar-collapse">
       <p class="navbar-text">D3 flame chart plugin</p>
       <ul class="nav navbar-nav navbar-right">
+        <ol class="breadcrumb list-inline"></ol>
         <li><a href="#" data-toggle="modal" data-target="#myModal">What is this?</a></li>
       </ul>
     </div>

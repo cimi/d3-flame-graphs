@@ -81,9 +81,33 @@ d3.flameGraph = ->
   class FlameGraph
     constructor: (@containerId) ->
       @_generateAccessors(['width', 'height'])
+      @_allData = []
 
     data: (data) ->
       return @_data if not data
+      @_allData.push(data)
+
+      breadcrumbData = @_allData.map((prevData, idx) -> { name: prevData.name, value: idx })
+      console.log(breadcrumbData)
+      breadcrumbs = d3.select('.breadcrumb')
+        .selectAll('li')
+        .data(breadcrumbData)
+
+      breadcrumbs.enter()
+        .append('li')
+          .append('a')
+          .text((d) -> "#{d.name}")
+          .on 'click', (breadcrumb) =>
+            idx = breadcrumb.value
+            displayed = @_allData[idx]
+            @_allData = @_allData.slice(0, idx)
+            @data(displayed)
+              .render()
+              .interactivity()
+
+      breadcrumbs.exit().remove()
+
+
       @_data = d3.layout.partition()
         .sort((a,b) -> a.name.localeCompare(b.name))
         .nodes(data)
@@ -100,7 +124,7 @@ d3.flameGraph = ->
         shortLabel = [tokens[length - 2], tokens[length - 1]].join(delimiter)
 
         ratio = 4
-        maxLength = Math.round(@rangeX(dx) / ratio)
+        maxLength = Math.round(@x(dx) / ratio)
         return shortLabel.substr(0, maxLength)
 
     render: () ->
@@ -119,27 +143,25 @@ d3.flameGraph = ->
       @cellHeight  = 10
       @maxCells    = Math.floor(@height() / @cellHeight)
 
-      @rangeX = d3.scale.linear().range([ 0, @width() ])
-      @rangeY = d3.scale.linear().range([ 0, @height() ])
       depth = maxDepth(@data()[0])
-      console.log(maxY, depth)
+      @x = d3.scale.linear()
+        .range([0, @width()])
+        .domain([0, d3.max(@data(), (d) -> d.x)])
       @quantizedY = d3.scale.quantize()
         .domain([0, maxY])
-        .range(d3.range(depth))
-
+        .range(d3.range(1, depth + 1))
       @y = (y) -> @height() - @quantizedY(y) * @cellHeight
-      @inverseY = (y, dy) -> @height() - @rangeY(y) - @rangeY(dy)
 
       @container
         .selectAll('.node')
         .data(@data().filter((d) =>
-          @rangeX(d.dx) > 0.1 and @quantizedY(d.y) <= @maxCells))
+          @x(d.dx) > 0.1 and @quantizedY(d.y) <= @maxCells))
         .enter()
           .append('rect')
             .attr('class', 'node')
-            .attr 'width', (d) => @rangeX(d.dx)
+            .attr 'width', (d) => @x(d.dx)
             .attr('height', (d) => @cellHeight - 2)
-            .attr('x', (d) => @rangeX(d.x))
+            .attr('x', (d) => @x(d.x))
             .attr('y', (d) => @y(d.y))
             # .attr('rx', constants.RX)
             # .attr('ry', constants.RY)
@@ -149,13 +171,13 @@ d3.flameGraph = ->
 
       @container
         .selectAll('.label')
-        .data(@data().filter((d) => d.name and @rangeX(d.dx) > constants.MIN_LABEL_WIDTH))
+        .data(@data().filter((d) => d.name and @x(d.dx) > constants.MIN_LABEL_WIDTH))
         .enter()
           .append('text')
             .attr('class', 'label')
             .attr('text-anchor', 'middle')
             .attr('dy', constants.EM_OF_LABEL_HEIGHT)
-            .attr('x', (d) => @rangeX(d.x) + @rangeX(d.dx) / 2)
+            .attr('x', (d) => @x(d.x) + @x(d.dx) / 2)
             .attr('y', (d) => @y(d.y) + @cellHeight / 2)
             .text((d) => @getLabelText(d.name, d.dx))
           # .on("mouseover", (d) -> @onMouseover(d))

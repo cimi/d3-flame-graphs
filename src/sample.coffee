@@ -145,17 +145,18 @@ d3.flameGraph = ->
 
       depth = maxDepth(@data()[0])
       @x = d3.scale.linear()
+        .domain([0, d3.max(@data(), (d) -> d.x + d.dx)])
         .range([0, @width()])
-        .domain([0, d3.max(@data(), (d) -> d.x)])
-      @quantizedY = d3.scale.quantize()
+      @y = d3.scale.quantize()
         .domain([0, maxY])
-        .range(d3.range(1, depth + 1))
-      @y = (y) -> @height() - @quantizedY(y) * @cellHeight
+        .range(d3.range(depth, 0, -1)
+          .map((cell) =>  (cell  - depth - 1 + @maxCells) * @cellHeight))
+
 
       @container
         .selectAll('.node')
         .data(@data().filter((d) =>
-          @x(d.dx) > 0.1 and @quantizedY(d.y) <= @maxCells))
+          @x(d.dx) > 0.1 and @y(d.y) >= 0))
         .enter()
           .append('rect')
             .attr('class', 'node')
@@ -192,7 +193,7 @@ d3.flameGraph = ->
     interactivity: () ->
       console.time('interactivity')
       clickHandler = (d) =>
-          console.log(d.y, @quantizedY(d.y))
+          console.log(d.y, @y(d.y))
           @data(d).render().interactivity()
 
       @container
@@ -214,7 +215,7 @@ d3.flameGraph = ->
             @["_#{accessor}"] = newValue
             return @
 
-  return new FlameGraph('#d3-flame-graph').width(1200).height(800)
+  return new FlameGraph('#d3-flame-graph').width(1200).height(600)
 
 d3.json "data/profile-large.json", (err, data) ->
   window.flameGraph = d3.flameGraph()

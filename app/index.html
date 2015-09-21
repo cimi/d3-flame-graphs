@@ -17,6 +17,13 @@
   .nav .breadcrumb {
     float: left;
     margin: 7px 10px;
+    cursor: pointer;
+  }
+  #d3-flame-graph {
+    width: 1202px;
+    height: 600px;
+    margin: 65px auto;
+    border: 1px solid #0e0e0e
   }
   </style>
 </head>
@@ -42,11 +49,43 @@
 </nav>
 
 <div id="svTooltip" style="position: absolute;"></div>
-<div id="d3-flame-graph" style="
-  width: 1200px;
-  height: 800px;
-  margin: 100px auto;
-  border: 1px solid #0e0e0e"></div>
+<div id="d3-flame-graph"></div>
+
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel">What is this?</h4>
+      </div>
+      <div class="modal-body">
+        <h4>What is this?</h4>
+        <p>This is a d3.js plugin that renders flame graphs from hierarchical data. It was developed with the intent of being used in <a href="http://profiler.amazon.com">profiler.amazon.com</a>, but I intend to publish it as open-source.</p>
+
+        <p>This sample view renders data from the ItemMasterServerV3 environment, a 6MB JSON file with ~75K samples. Rendering is decreased from ~2s to ~150ms for the entire dataset. Further re-rendering following navigation by clicking elements comes with a similar rendering cost. Without having performed a strict benchmark, the performance improvement seems to be at least an order of magnitude.</p>
+
+        <h4>Currently implemented features:</h4>
+        <ul>
+          <li>Breadcrumbs - the navbar is populated with the names of the classes that were navigated into.</li>
+          <li></li>
+        </ul>
+
+        <h4>Roadmap:</h4>
+        <ul>
+          <li>Tooltip showing the FQDN of the hovered classes, time percentage and subtree depth.</li>
+          <li>Parametrizing the DOM element in which breadcrumbs are rendered </li>
+          <li>Zoom by increasing the scale of the SVG</li>
+          <li>Code refactoring</li>
+        </ul>
+
+        <h4>How was this made?</h4>
+        <p>This plugin was built using gulp and coffeescript. The build code needs serious refactoring as the demo page needs to be separated from the plugin distributable build.</p>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>

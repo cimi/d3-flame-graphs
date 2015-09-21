@@ -107,10 +107,14 @@ d3.flameGraph = ->
       # compute height dynamically so the fixed unit is the height of a cell
       console.time('rendering')
 
+      d3.select(@containerId)
+        .select('svg').remove()
       @container = d3.select(@containerId)
         .append('svg')
-        .attr('width', @width())
-        .attr('height', @height())
+          .attr('width', @width())
+          .attr('height', @height())
+
+      @container.selectAll('.node', '.label').remove()
 
       @cellHeight  = 10
       @maxCells    = Math.floor(@height() / @cellHeight)
@@ -142,7 +146,6 @@ d3.flameGraph = ->
             .attr('stroke', (d) -> randomizeColor(constants.FLAME_RGB))
             .attr('fill', (d) -> if d.color then d.color else randomizeColor(constants.FLAME_RGB))
             .attr('fill-opacity', '0.8')
-          .on('click', (d) => console.log(d.y, @quantizedY(d.y)))
 
       @container
         .selectAll('.label')
@@ -161,7 +164,25 @@ d3.flameGraph = ->
           # .on("click", (d) -> if (!d3.event.defaultPrevented) then @onSetRootCallback(d.location))
 
       console.timeEnd('rendering')
+      console.log("Rendered #{@container.selectAll('.node')[0].length} elements")
       return @
+
+    interactivity: () ->
+      console.time('interactivity')
+      clickHandler = (d) =>
+          console.log(d.y, @quantizedY(d.y))
+          @data(d).render().interactivity()
+
+      @container
+        .selectAll('.node')
+        .on 'click', clickHandler
+
+      @container
+        .selectAll('.label')
+        .on 'click', clickHandler
+
+      console.timeEnd('interactivity')
+      @
 
     _generateAccessors: (accessors) ->
       for accessor in accessors
@@ -175,4 +196,6 @@ d3.flameGraph = ->
 
 d3.json "data/profile-large.json", (err, data) ->
   window.flameGraph = d3.flameGraph()
-  flameGraph.data(convert(data.profile)).render()
+  flameGraph.data(convert(data.profile))
+    .render()
+    .interactivity()

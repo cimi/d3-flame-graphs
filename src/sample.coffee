@@ -13,14 +13,13 @@ constants =
   TOOLTIP_BORDER_COLOR_MINUS : '#99D699',
   TOOLTIP_BORDER_COLOD_DEFAULT : '#DDD',
   MIN_LABEL_WIDTH : 40,
-  RX : 5,
-  RY : 5,
+  RX : 2,
+  RY : 2,
   TOOLTIP_OFFSET: 3,
   EM_OF_FLAME_BAR: 0.5,
   EM_OF_LABEL_HEIGHT: ".35em"
 
 convert = (rawData) ->
-
   value = 0
   for state in ['RUNNABLE', 'BLOCKED', 'TIMED_WAITING', 'WAITING']
     value += rawData.c[state] if not isNaN(rawData.c[state])
@@ -30,6 +29,8 @@ convert = (rawData) ->
     value: value,
     samples: value
     children: []
+
+  # the a field is the list of children
   return node if not rawData.a
 
   childSum = 0
@@ -40,6 +41,9 @@ convert = (rawData) ->
       childSum += subTree.value
 
   if childSum < node.value
+    # not sure why we need to create these transparent fillers?
+    # also not sure why we wouldn't have all the data?
+    # maybe when filtering?
     fillerNode =
       name: ''
       value: node.value - childSum
@@ -52,55 +56,115 @@ convert = (rawData) ->
 rgbToHex = (red, green, blue) ->
   '#' + ((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).substr(1)
 
+randomizeColor = (rgb) ->
+    # generates a random integer between -FLAME_DIFF / 2 and FLAME_DIFF / 2
+    offset = (color) ->
+      color + Math.round((Math.random() * constants.FLAME_DIFFERENTIAL) - (constants.FLAME_DIFFERENTIAL * 0.5))
+
+    "rgb(#{offset(rgb[0])}, #{offset(rgb[1])}, #{offset(rgb[2])})"
+
+maxDepth = (node) ->
+  return 0 if not node
+  return 1 if not node.children
+
+  max = 0
+  node.children.forEach (child) ->
+    depth = maxDepth(child)
+    max = depth if depth > max
+
+  return max + 1
+
 d3.flameGraph = ->
 
   class FlameGraph
-    constructor: (@_width, @_height, containerId) ->
-      @rangeX = d3.scale.linear().range([ 0, @_width ])
-      @rangeY = d3.scale.linear().range([ 0, @_height ])
-      @inverseY = (d) -> @_height - @rangeY(d.y) - @rangeY(d.dy);
-      @container = d3.select(containerId)
-        .append('svg')
-        .attr('width', @_width)
-        .attr('height', @_height)
+    constructor: (@containerId) ->
       @_generateAccessors(['width', 'height'])
 
-
-    render: (data) ->
-      # compute height dynamically so the fixed unit is the height of a cell
-      console.time('rendering')
-      data = d3.layout.partition()
+    data: (data) ->
+      return @_data if not data
+      @_data = d3.layout.partition()
         .sort((a,b) -> a.name.localeCompare(b.name))
         .nodes(data)
+      @
+
+    getLabelText: (label, dx) ->
+      return "" if not label
+      shortLabel = label;
+
+      if (shortLabel.indexOf(".") != -1)
+        delimiter = "."
+        tokens = label.split(delimiter)
+        length = tokens.length
+        shortLabel = [tokens[length - 2], tokens[length - 1]].join(delimiter)
+
+        ratio = 4
+        maxLength = Math.round(@rangeX(dx) / ratio)
+        return shortLabel.substr(0, maxLength)
+
+    render: () ->
+      # compute height dynamically so the fixed unit is the height of a cell
+      console.time('rendering')
+
+      @container = d3.select(@containerId)
+        .append('svg')
+        .attr('width', @width())
+        .attr('height', @height())
+
+      @cellHeight  = 10
+      @maxCells    = Math.floor(@height() / @cellHeight)
+
+      @rangeX = d3.scale.linear().range([ 0, @width() ])
+      @rangeY = d3.scale.linear().range([ 0, @height() ])
+      @quantizedY = d3.scale.quantize().range(d3.range(maxDepth(@data()[0])))
+
+      @y = (y) -> @height() - @quantizedY(y) * @cellHeight
+      @inverseY = (y, dy) -> @height() - @rangeY(y) - @rangeY(dy)
 
       @container
         .selectAll('.node')
-        .data(data)
+        .data(@data().filter((d) =>
+          @rangeX(d.dx) > 0.1 and @quantizedY(d.y) <= @maxCells))
         .enter()
           .append('rect')
             .attr('class', 'node')
             .attr('width', (d) => @rangeX(d.dx))
-            .attr('height', (d) => if @rangeX(d.dx) > 5 then @rangeY(d.dy) else 0)
+            .attr('height', (d) => @cellHeight)
             .attr('x', (d) => @rangeX(d.x))
-            .attr('y', (d) => @inverseY(d))
+            .attr('y', (d) => @y(d.y))
             .attr('rx', constants.RX)
             .attr('ry', constants.RY)
-            .attr('fill', (d) ->
-              rgbToHex.apply(null, constants.FLAME_RGB))
+            .attr('stroke', 'blue')
+            .attr('fill', (d) -> if d.color then d.color else randomizeColor(constants.FLAME_RGB))
+            .attr('fill-opacity', '0.8')
+
+      @container
+        .selectAll('.label')
+        .data(@data().filter((d) => d.name and @rangeX(d.dx) > constants.MIN_LABEL_WIDTH))
+        .enter()
+          .append('text')
+            .attr('class', 'label')
+            .attr('text-anchor', 'middle')
+            .attr('dy', constants.EM_OF_LABEL_HEIGHT)
+            .attr('x', (d) => @rangeX(d.x) + @rangeX(d.dx) / 2)
+            .attr('y', (d) => @y(d.y) + @cellHeight / 2)
+            .text((d) => @getLabelText(d.name, d.dx))
+          # .on("mouseover", (d) -> @onMouseover(d))
+          # .on("mousemove", (d) -> @onMousemove())
+          # .on("mouseout", (d) -> @onMouseout())
+          # .on("click", (d) -> if (!d3.event.defaultPrevented) then @onSetRootCallback(d.location))
+
       console.timeEnd('rendering')
       return @
 
     _generateAccessors: (accessors) ->
       for accessor in accessors
-        @[accessor] = (newValue) ->
-          return @["_#{accessor}"] if not arguments.length
-          @["_#{accessor}"] = newValue
-          return @
+        @[accessor] = do (accessor) ->
+          (newValue) ->
+            return @["_#{accessor}"] if not arguments.length
+            @["_#{accessor}"] = newValue
+            return @
 
-  return new FlameGraph(1200, 5000, '#d3-flame-graph')
+  return new FlameGraph('#d3-flame-graph').width(1200).height(800)
 
 d3.json "data/profile.json", (err, data) ->
-  console.time('convert')
-  converted = convert(data.profile)
-  console.timeEnd('convert')
-  d3.flameGraph().render(converted)
+  d3.flameGraph().data(convert(data.profile)).render()

@@ -63,6 +63,7 @@ randomizeColor = (rgb) ->
 
     "rgb(#{offset(rgb[0])}, #{offset(rgb[1])}, #{offset(rgb[2])})"
 
+maxY = 0
 maxDepth = (node) ->
   return 0 if not node
   return 1 if not node.children
@@ -71,6 +72,7 @@ maxDepth = (node) ->
   node.children.forEach (child) ->
     depth = maxDepth(child)
     max = depth if depth > max
+    maxY = child.y if child.y > maxY
 
   return max + 1
 
@@ -115,7 +117,11 @@ d3.flameGraph = ->
 
       @rangeX = d3.scale.linear().range([ 0, @width() ])
       @rangeY = d3.scale.linear().range([ 0, @height() ])
-      @quantizedY = d3.scale.quantize().range(d3.range(maxDepth(@data()[0])))
+      depth = maxDepth(@data()[0])
+      console.log(maxY, depth)
+      @quantizedY = d3.scale.quantize()
+        .domain([0, maxY])
+        .range(d3.range(depth))
 
       @y = (y) -> @height() - @quantizedY(y) * @cellHeight
       @inverseY = (y, dy) -> @height() - @rangeY(y) - @rangeY(dy)
@@ -127,9 +133,7 @@ d3.flameGraph = ->
         .enter()
           .append('rect')
             .attr('class', 'node')
-            .attr 'width', (d) =>
-              width = @rangeX(d.dx)
-              if width > 4 then width - 2 else width
+            .attr 'width', (d) => @rangeX(d.dx)
             .attr('height', (d) => @cellHeight - 2)
             .attr('x', (d) => @rangeX(d.x))
             .attr('y', (d) => @y(d.y))
@@ -138,6 +142,7 @@ d3.flameGraph = ->
             .attr('stroke', (d) -> randomizeColor(constants.FLAME_RGB))
             .attr('fill', (d) -> if d.color then d.color else randomizeColor(constants.FLAME_RGB))
             .attr('fill-opacity', '0.8')
+          .on('click', (d) => console.log(d.y, @quantizedY(d.y)))
 
       @container
         .selectAll('.label')
@@ -168,5 +173,6 @@ d3.flameGraph = ->
 
   return new FlameGraph('#d3-flame-graph').width(1200).height(800)
 
-d3.json "data/profile.json", (err, data) ->
-  d3.flameGraph().data(convert(data.profile)).render()
+d3.json "data/profile-large.json", (err, data) ->
+  window.flameGraph = d3.flameGraph()
+  flameGraph.data(convert(data.profile)).render()

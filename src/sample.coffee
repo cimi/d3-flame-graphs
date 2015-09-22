@@ -12,10 +12,13 @@ convert = (rawData) ->
   for state in ['RUNNABLE', 'BLOCKED', 'TIMED_WAITING', 'WAITING']
     value += rawData.c[state] if not isNaN(rawData.c[state])
 
+  timeElapsed = new Date()
+  timeElapsed.setSeconds(value)
   node =
     name: rawData.n,
     value: value,
     samples: value
+    totalTime: countdown(new Date(), timeElapsed, countdown.DAYS | countdown.HOURS | countdown.MINUTES | countdown.SECONDS)
     children: []
 
   # the a field is the list of children
@@ -81,14 +84,14 @@ d3.flameGraph = ->
     data: (data) ->
       return @_data if not data
       @_allData.push(data)
-
+      @totalSamples = data.samples
       @_data = d3.layout.partition()
         .sort((a,b) -> a.name.localeCompare(b.name))
         .nodes(data)
       @
 
     label: (d) ->
-      return "" if not d.name
+      return "" if not d?.name
       label = getClassAndMethodName(d.name)
       label.substr(0, Math.round(@x(d.dx) / 4))
 
@@ -142,7 +145,29 @@ d3.flameGraph = ->
 
       console.timeEnd('render')
       console.log("Rendered #{@container().selectAll('.node')[0].length} elements")
-      return @_breadcrumbs()._interactivity()
+      return @_breadcrumbs()._tooltip()._interactivity()
+
+    _tooltip: () ->
+      @tip = d3.tip()
+        .attr('class', 'd3-tip')
+        .html((d) => "#{d.name} <br /><br />#{d.totalTime} run time<br />#{((d.samples / @totalSamples) * 100).toFixed(2)}% of total")
+        .direction (d) =>
+          return 'w' if @x(d.x) + @x(d.dx) / 2 > @width() - 100
+          return 'e' if @x(d.x) + @x(d.dx) / 2 < 100
+          return 's' if @y(d.y) < 100
+          return 'n' # otherwise
+        .offset([- @cellHeight() / 2, 0])
+
+      @container().call(@tip)
+      @container()
+        .selectAll('.node')
+          .on 'mouseover', @tip.show
+          .on 'mouseout', @tip.hide
+      @container()
+        .selectAll('.label')
+          .on 'mouseover', @tip.show
+          .on 'mouseout', @tip.hide
+      @
 
     _breadcrumbs: () ->
       breadcrumbData = @_allData.map((prevData, idx) -> { name: prevData.name, value: idx })

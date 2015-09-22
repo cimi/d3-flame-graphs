@@ -5,6 +5,7 @@
   <title>D3 Flame Graph</title>
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-MfvZlkHCEqatNoGiOXveE8FIwMzZg4W85qfrfIFBfYc= sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
   <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha256-k2/8zcNbxVIh5mnQ52A0r3a6jAgMGxFJFE2707UxGCk= sha512-ZV9KawG2Legkwp3nAlxLIVFudTauWuBpC10uEafMHYL0Sarrz5A7G79kXh5+5+woxQ5HM559XX2UZjMJ36Wplg==" crossorigin="anonymous">
+  <link rel="stylesheet" href="//rawgithub.com/Caged/d3-tip/master/examples/example-styles.css">
   <style>
   .label {
     font-family: Helvetica;
@@ -62,19 +63,19 @@
       </div>
       <div class="modal-body">
         <h4>What is this?</h4>
-        <p>This is a d3.js plugin that renders flame graphs from hierarchical data. It was developed with the intent of being used in <a href="http://profiler.amazon.com">profiler.amazon.com</a>, but I intend to publish it as open-source.</p>
+        <p>This is a d3.js plugin that renders flame graphs from hierarchical data. It was developed with the intent of being used in <a href="http://profiler.amazon.com">profiler.amazon.com</a>, but I intend to publish it as open-source under the MIT license.</p>
 
         <p>This sample view renders data from the ItemMasterServerV3 environment, a 6MB JSON file with ~75K samples. Rendering is decreased from ~2s to ~150ms for the entire dataset. Further re-rendering following navigation by clicking elements comes with a similar rendering cost. Without having performed a strict benchmark, the performance improvement seems to be at least an order of magnitude.</p>
 
         <h4>Currently implemented features:</h4>
         <ul>
           <li>Breadcrumbs - the navbar is populated with the names of the classes that were navigated into.</li>
-          <li></li>
+          <li>Tooltip showing the FQDN of the hovered classes, total and percentual time spent.</li>
         </ul>
 
         <h4>Roadmap:</h4>
         <ul>
-          <li>Tooltip showing the FQDN of the hovered classes, time percentage and subtree depth.</li>
+          <li>Filtering from the UI (input with autocomplete)</li>
           <li>Parametrizing the DOM element in which breadcrumbs are rendered </li>
           <li>Zoom by increasing the scale of the SVG</li>
           <li>Code refactoring</li>
@@ -91,6 +92,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha256-Sk3nkD6mLTMOF0EOpNtsIry+s1CsaqQC1rVLTAy+0yc= sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.6.7/d3-tip.js"></script>
+<script src="https://rawgit.com/mckamey/countdownjs/master/countdown.min.js"></script>
 <script src="all.min.js"></script>
 </body>
 </html>

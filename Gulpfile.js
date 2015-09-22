@@ -32,7 +32,7 @@ gulp.task('scripts', function() {
 });
 
 gulp.task('copy', ['scripts'], function(){
-  return gulp.src('app/**/*.*')
+  return gulp.src(['app/**/*.*'])
     .pipe(gulp.dest('build'));
 });
 

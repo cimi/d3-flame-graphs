@@ -51,7 +51,7 @@ maxDepth = (node) ->
   node.maxDepth = max + 1
   return node.maxDepth
 
-d3.json "data/profile-large.json", (err, data) ->
+d3.json "data/profile-huge.json", (err, data) ->
 
   profile = convert(data.profile)
   maxDepth(profile)

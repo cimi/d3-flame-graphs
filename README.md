@@ -1,6 +1,12 @@
 <h4>What is this?</h4>
 <p>This is a d3.js plugin that renders flame graphs from hierarchical data.</p>
 
+Flame graphs were invented by Brendan Gregg; you can find the original implementation for drawing them as well as ports to different languages/environments on his website. To quote him:
+
+> Flame graphs are a visualization of profiled software, allowing the most frequent code-paths to be identified quickly and accurately. They can be generated using my open source programs on [github.com/brendangregg/FlameGraph](http://github.com/brendangregg/FlameGraph), which create interactive SVGs. See the Updates section for other implementations.
+> 
+> -- [Flame Graphs](http://www.brendangregg.com/flamegraphs.html), <cite>Brendan Gregg</cite>
+
 <h4>Currently implemented features:</h4>
 <ul>
   <li>Breadcrumbs - the navbar is populated with the names of the classes that were navigated into.</li>

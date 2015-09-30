@@ -1,17 +1,16 @@
-
-
+# function that converts from a particular data format into the generic one
+# expected by the plugin
 convert = (rawData) ->
   value = 0
   for state in ['RUNNABLE', 'BLOCKED', 'TIMED_WAITING', 'WAITING']
     value += rawData.c[state] if not isNaN(rawData.c[state])
 
-  timeElapsed = new Date()
-  timeElapsed.setSeconds(value)
+  timeFormat =  countdown.DAYS | countdown.HOURS | countdown.MINUTES | countdown.SECONDS)
   node =
     name: rawData.n,
     value: value,
     samples: value
-    totalTime: countdown(new Date(), timeElapsed, countdown.DAYS | countdown.HOURS | countdown.MINUTES | countdown.SECONDS)
+    totalTime: countdown(new Date(), timeElapsed, timeFormat)
     children: []
 
   # the a field is the list of children
@@ -25,11 +24,7 @@ convert = (rawData) ->
       childSum += subTree.value
 
   if childSum < node.value
-    # not sure why we need to create these transparent fillers?
-    # also not sure why we wouldn't have all the data?
-    # maybe when filtering?
     fillerNode =
-      name: ''
       value: node.value - childSum
       samples: node.value - childSum
       opacity: 0
@@ -38,6 +33,8 @@ convert = (rawData) ->
 
   node
 
+# augments each node in the tree with the maximum distance
+# it is from a terminal node
 maxDepth = (node) ->
   return 0 if not node
   return 1 if not node.children
@@ -51,7 +48,7 @@ maxDepth = (node) ->
   node.maxDepth = max + 1
   return node.maxDepth
 
-d3.json "data/profile-huge.json", (err, data) ->
+d3.json "data/profile.json", (err, data) ->
 
   profile = convert(data.profile)
   maxDepth(profile)

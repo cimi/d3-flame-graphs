@@ -1,3 +1,5 @@
+## [![Circle CI](https://circleci.com/gh/cimi/d3-flame-graph/tree/master.svg?style=svg)](https://circleci.com/gh/cimi/d3-flame-graph/tree/master)
+
 ## What is this?
 
 This is a d3.js plugin that renders flame graphs from hierarchical data.

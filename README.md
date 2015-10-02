@@ -22,7 +22,7 @@ Flame graphs were invented by Brendan Gregg; you can find the original implement
 
 ## How was this made?
 
-This plugin was built using gulp and coffeescript. The build code needs serious refactoring as the demo page needs to be separated from the plugin distributable build.
+This plugin was built using gulp and coffeescript.
 
 ## API Reference
 

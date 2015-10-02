@@ -8,49 +8,60 @@ var reload = browserSync.reload;
 var del = require('del');
 
 var paths = {
-  scripts: ['src/**/*.coffee', '!client/external/**/*.coffee'],
-  app: ['app/*']
+  scripts:        ['src/**/*.coffee'],
+  demoResources:  ['demo/**/*.*', 'dist/**/*.*', '!demo/src/**'],
+  demoScripts:    ['demo/src/**/*.coffee'],
+  dist:           'dist',
+  demoOut:        'build'
 };
 
-// Not all tasks need to use streams
-// A gulpfile is just another node program and you can use any package available on npm
 gulp.task('clean', function(cb) {
-  // You can use multiple globbing patterns as you would with `gulp.src`
-  del(['build'], cb);
+  del([paths.dist, paths.demoOut], cb);
 });
 
-gulp.task('scripts', function() {
+// Create the distributable artifacts of the plugin.
+gulp.task('dist', function () {
+  gulp.src(paths.scripts)
+    .pipe(coffee())
+    .pipe(concat('d3-flame-graph.js'))
+    .pipe(gulp.dest(paths.dist))
+  gulp.src(paths.scripts)
+    .pipe(coffee())
+    .pipe(uglify())
+    .pipe(concat('d3-flame-graph.min.js'))
+    .pipe(gulp.dest(paths.dist))
+});
+// TODO: release task that creates a tag from the distributables
+// and publishes to npm
+
+
+// building the demo page
+gulp.task('demo-scripts', function() {
   // Minify and copy all JavaScript (except vendor scripts)
   // with sourcemaps all the way down
-  return gulp.src(paths.scripts)
+  return gulp.src(paths.demoScripts)
     .pipe(sourcemaps.init())
-      .pipe(coffee())
-      // .pipe(uglify())
-      .pipe(concat('all.min.js'))
+    .pipe(coffee())
+    .pipe(concat('demo.js'))
     .pipe(sourcemaps.write())
-    .pipe(gulp.dest('build'));
+    .pipe(gulp.dest(paths.demoOut));
 });
 
-gulp.task('copy', ['scripts'], function(){
-  return gulp.src(['app/**/*.*'])
-    .pipe(gulp.dest('build'));
+gulp.task('demo-copy', ['dist', 'demo-scripts'], function(){
+  return gulp.src(paths.demoResources)
+    .pipe(gulp.dest(paths.demoOut));
 });
 
 // Rerun the task when a file changes
-gulp.task('watch', function() {
-  gulp.watch(paths.scripts, ['scripts']);
-  gulp.watch(paths.app, ['copy']);
+gulp.task('demo-watch', function() {
+  gulp.watch(paths.demoScripts,     ['demo-scripts']);
+  gulp.watch(paths.demoResources,   ['demo-copy']);
 });
 
-gulp.task('serve', ['watch', 'copy'], function() {
-  browserSync({
-    server: {
-      baseDir: 'build'
-    }
-  });
-
-  gulp.watch(['*.html', '*.css', '*.js'], {cwd: 'build'}, reload);
+gulp.task('serve', ['demo-watch', 'demo-copy'], function() {
+  browserSync({ server: { baseDir: paths.demoOut } });
+  gulp.watch(['*.html', '*.css', '*.js'], { cwd: paths.demoOut }, reload);
 });
 
 // The default task (called when you run `gulp` from cli)
-gulp.task('default', ['watch', 'scripts', 'copy']);
+gulp.task('default', ['demo-watch', 'demo-scripts', 'demo-copy']);

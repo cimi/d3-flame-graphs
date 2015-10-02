@@ -1,1 +1,3 @@
-app/data/*.json
+demo/data/*.json
+build/
+dist/

@@ -1,1 +1,3 @@
 app/data/*.json
+build/
+dist/

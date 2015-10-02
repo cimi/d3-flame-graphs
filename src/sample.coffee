@@ -5,7 +5,9 @@ convert = (rawData) ->
   for state in ['RUNNABLE', 'BLOCKED', 'TIMED_WAITING', 'WAITING']
     value += rawData.c[state] if not isNaN(rawData.c[state])
 
-  timeFormat =  countdown.DAYS | countdown.HOURS | countdown.MINUTES | countdown.SECONDS)
+  timeElapsed = new Date()
+  timeElapsed.setSeconds(value)
+  timeFormat = countdown.DAYS | countdown.HOURS | countdown.MINUTES | countdown.SECONDS
   node =
     name: rawData.n,
     value: value,
@@ -25,6 +27,7 @@ convert = (rawData) ->
 
   if childSum < node.value
     fillerNode =
+      name: ''
       value: node.value - childSum
       samples: node.value - childSum
       opacity: 0

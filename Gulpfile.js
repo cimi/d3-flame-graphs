@@ -8,14 +8,15 @@ var reload = browserSync.reload;
 var del = require('del');
 
 var paths = {
-  scripts: ['src/d3-flame-graph.coffee'],
-  demoScripts: ['app/src/**/*.coffee'],
-  dist: 'dist',
-  demoOut: 'build'
+  scripts:        ['src/**/*.coffee'],
+  demoResources:  ['app/**/*.*', 'dist/**/*.*', '!app/src/**'],
+  demoScripts:    ['app/src/**/*.coffee'],
+  dist:           'dist',
+  demoOut:        'build'
 };
 
 gulp.task('clean', function(cb) {
-  del(['build', 'dist'], cb);
+  del([paths.dist, paths.demoOut], cb);
 });
 
 // Create the distributable artifacts of the plugin.
@@ -30,7 +31,6 @@ gulp.task('dist', function () {
     .pipe(concat('d3-flame-graph.min.js'))
     .pipe(gulp.dest(paths.dist))
 });
-
 // TODO: release task that creates a tag from the distributables
 // and publishes to npm
 
@@ -50,14 +50,14 @@ gulp.task('demo-scripts', function() {
 
 
 gulp.task('demo-copy', ['dist', 'demo-scripts'], function(){
-  return gulp.src(['app/**/*.*', 'dist/**/*.*', '!app/src/**'])
+  return gulp.src(paths.demoResources)
     .pipe(gulp.dest(paths.demoOut));
 });
 
 // Rerun the task when a file changes
 gulp.task('demo-watch', function() {
-  gulp.watch(paths.demoScripts, ['demo-scripts']);
-  gulp.watch(paths.app,         ['demo-copy']);
+  gulp.watch(paths.demoScripts,     ['demo-scripts']);
+  gulp.watch(paths.demoResources,   ['demo-copy']);
 });
 
 gulp.task('serve', ['demo-watch', 'demo-copy'], function() {

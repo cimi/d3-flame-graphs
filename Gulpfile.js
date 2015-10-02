@@ -9,8 +9,8 @@ var del = require('del');
 
 var paths = {
   scripts:        ['src/**/*.coffee'],
-  demoResources:  ['app/**/*.*', 'dist/**/*.*', '!app/src/**'],
-  demoScripts:    ['app/src/**/*.coffee'],
+  demoResources:  ['demo/**/*.*', 'dist/**/*.*', '!demo/src/**'],
+  demoScripts:    ['demo/src/**/*.coffee'],
   dist:           'dist',
   demoOut:        'build'
 };
@@ -47,8 +47,6 @@ gulp.task('demo-scripts', function() {
     .pipe(gulp.dest(paths.demoOut));
 });
 
-
-
 gulp.task('demo-copy', ['dist', 'demo-scripts'], function(){
   return gulp.src(paths.demoResources)
     .pipe(gulp.dest(paths.demoOut));
@@ -61,13 +59,8 @@ gulp.task('demo-watch', function() {
 });
 
 gulp.task('serve', ['demo-watch', 'demo-copy'], function() {
-  browserSync({
-    server: {
-      baseDir: paths.demoOut
-    }
-  });
-
-  gulp.watch(['*.html', '*.css', '*.js'], {cwd: paths.demoOut}, reload);
+  browserSync({ server: { baseDir: paths.demoOut } });
+  gulp.watch(['*.html', '*.css', '*.js'], { cwd: paths.demoOut }, reload);
 });
 
 // The default task (called when you run `gulp` from cli)

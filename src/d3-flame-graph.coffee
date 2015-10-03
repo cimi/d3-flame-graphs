@@ -9,6 +9,8 @@ d3.flameGraph = ->
         'size',
         'margin',
         'cellHeight',
+        'breadcrumbs',
+        'tooltip',
         'colors'])
       @_allData = []
       # defaults
@@ -96,9 +98,11 @@ d3.flameGraph = ->
 
       console.timeEnd('render')
       console.log("Rendered #{@container.selectAll('.node')[0].length} elements")
-      return @_breadcrumbs()._tooltip()._interactivity()
+      @_enableNavigation()._renderBreadcrumbs() if @breadcrumbs()
+      @_renderTooltip()                         if @tooltip()
+      @
 
-    _tooltip: () ->
+    _renderTooltip: () ->
       @tip = d3.tip()
         .attr('class', 'd3-tip')
         .html((d) => "#{d.name} <br /><br />#{d.totalTime} run time<br />#{((d.samples / @totalSamples) * 100).toFixed(2)}% of total")
@@ -120,9 +124,9 @@ d3.flameGraph = ->
           .on 'mouseout', @tip.hide
       @
 
-    _breadcrumbs: () ->
+    _renderBreadcrumbs: () ->
       breadcrumbData = @_allData.map((prevData, idx) -> { name: prevData.name, value: idx })
-      breadcrumbs = d3.select('.breadcrumb')
+      breadcrumbs = d3.select(@breadcrumbs())
         .selectAll('li')
         .data(breadcrumbData)
 
@@ -140,7 +144,7 @@ d3.flameGraph = ->
       breadcrumbs.exit().remove()
       @
 
-    _interactivity: () ->
+    _enableNavigation: () ->
       @container
         .selectAll('.node')
         .on 'click', (d) => @data(d).render(@_selector)

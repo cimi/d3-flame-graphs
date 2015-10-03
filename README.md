@@ -62,15 +62,24 @@ Triggers a repaint of the flame graph, using the values previously fed in as par
 
 The selector value is required, it defines the DOM element to which the SVG will be appended. Prior to rendering, any svg elements present in the given container will be cleared.
 
-__TODO__: Document the tooltip and breadcrumb functionality.
+### Extras
+
+<a href="#breadcrumbs">#</a> flameGraph.__breadcrumbs__(_selector_)
+
+If _selector_ is specified, the flame graph will enable clickthrough navigation and will create breadcrumbs in the container referenced by the selector. The breadcrumbs are added as list items, so the container is expected to be an ordered or unordered list. Each breadcrumb reverts the flame graph to a previous state on click. This value needs to be specified for the feature to be enabled, it is disabled by default.
+
+<a href="#tooltip">#</a> flameGraph.__tooltip__(_enabled_)
+
+If _enabled_ is true, a tooltip will be rendered on top of the cells in the graph on mouseover. The d3-tip plugin is responsible for rendering the tooltip. If set to false, the tooltip is disabled and nothing is rendered on mouseover. The default value is _true_.
 
 ### Sample invocation:
 
 ```
 d3.flameGraph()
-  .containerSelector('#d3-flame-graph')
-  .width(1200).height(600).cellHeight(10)
+  .size([1200, 600]).cellHeight(10)
+  .colors(["#ffffcc","#ffeda0","#fed976","#feb24c","#fd8d3c","#fc4e2a","#e31a1c","#bd0026"])
   .data(profile)
-  .colorScheme(["#ffffcc","#ffeda0","#fed976","#feb24c","#fd8d3c","#fc4e2a","#e31a1c","#bd0026"])
-  .render()
+  .breadcrumbs('.breadcrumb')
+  .tooltip(true)
+  .render('#d3-flame-graph')
 ```

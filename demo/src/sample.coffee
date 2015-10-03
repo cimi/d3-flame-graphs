@@ -59,4 +59,6 @@ d3.json "data/profile.json", (err, data) ->
   d3.flameGraph()
     .size([1200, 600]).cellHeight(10)
     .data(profile)
+    .breadcrumbs('.breadcrumb')
+    .tooltip(true)
     .render('#d3-flame-graph')

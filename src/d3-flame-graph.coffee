@@ -6,12 +6,15 @@ d3.flameGraph = ->
   class FlameGraph
     constructor: () ->
       @_generateAccessors([
-        'width',
-        'height',
+        'size',
+        'margin',
         'cellHeight',
         'containerSelector',
         'colorScheme'])
       @_allData = []
+      # defaults
+      @_size = [1200, 800]
+      @_margin = { top: 0, right: 0, bottom: 0, left: 0 }
 
     container: (selector) ->
       return @_container if not selector
@@ -29,6 +32,10 @@ d3.flameGraph = ->
         .nodes(data)
       @
 
+    width: () -> @size()[0] - (@margin().left + @margin().right)
+
+    height: () -> @size()[1] - (@margin().top + @margin().bottom)
+
     label: (d) ->
       return "" if not d?.name
       label = getClassAndMethodName(d.name)
@@ -44,9 +51,13 @@ d3.flameGraph = ->
       console.time('render')
 
       # refresh container
-      @container(@containerSelector())
-        .attr('width', @width())
-        .attr('height', @height())
+      @_container = @container(@containerSelector())
+          .attr('width', @size()[0])
+          .attr('height', @size()[1])
+          .style('border', '1px solid #0e0e0e')
+        .append('g')
+          .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
+
 
       @maxCells = Math.floor(@height() / @cellHeight())
       @maxDepth = @data()[0].maxDepth

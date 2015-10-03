@@ -57,8 +57,6 @@ d3.json "data/profile.json", (err, data) ->
   maxDepth(profile)
 
   d3.flameGraph()
-    .containerSelector('#d3-flame-graph')
     .size([1200, 600]).cellHeight(10)
     .data(profile)
-    .colorScheme(["#ffffcc","#ffeda0","#fed976","#feb24c","#fd8d3c","#fc4e2a","#e31a1c","#bd0026"])
-    .render()
+    .render('#d3-flame-graph')

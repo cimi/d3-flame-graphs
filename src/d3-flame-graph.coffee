@@ -9,19 +9,13 @@ d3.flameGraph = ->
         'size',
         'margin',
         'cellHeight',
-        'containerSelector',
-        'colorScheme'])
+        'colors'])
       @_allData = []
       # defaults
-      @_size = [1200, 800]
-      @_margin = { top: 0, right: 0, bottom: 0, left: 0 }
-
-    container: (selector) ->
-      return @_container if not selector
-      outerContainer = d3.select(selector)
-      outerContainer.select('svg').remove()
-      @_container = outerContainer.append('svg')
-      @_container
+      @_size        = [1200, 800]
+      @_cellHeight  = 10
+      @_margin      = { top: 0, right: 0, bottom: 0, left: 0 }
+      @_colors      = ['rgb(255,255,178)','rgb(254,204,92)','rgb(253,141,60)','rgb(240,59,32)','rgb(189,0,38)']
 
     data: (data) ->
       return @_data if not data
@@ -41,17 +35,20 @@ d3.flameGraph = ->
       label = getClassAndMethodName(d.name)
       label.substr(0, Math.round(@x(d.dx) / 4))
 
-    color: (d) -> @colorScheme()[Math.floor(Math.random() * @colorScheme().length)]
+    color: (d) -> @colors()[Math.floor(Math.random() * @colors().length)]
 
     getClassAndMethodName = (fqdn) ->
       tokens = fqdn.split(".")
       tokens.slice(tokens.length - 2).join(".")
 
-    render: () ->
+    render: (selector) ->
       console.time('render')
 
       # refresh container
-      @_container = @container(@containerSelector())
+      @_selector = selector
+      d3.select(selector).select('svg').remove()
+      @container = d3.select(selector)
+        .append('svg')
           .attr('width', @size()[0])
           .attr('height', @size()[1])
           .style('border', '1px solid #0e0e0e')
@@ -70,7 +67,7 @@ d3.flameGraph = ->
         .range(d3.range(@maxDepth)
           .map((cell) =>  (cell - @maxDepth + @maxCells) * @cellHeight()))
 
-      @container()
+      @container
         .selectAll('.node')
         .data(@data().filter((d) =>
           @x(d.dx) > 0.1 and @y(d.y) >= 0 and d.type != 'filler'))
@@ -81,11 +78,11 @@ d3.flameGraph = ->
             .attr('height', (d) => @cellHeight() - 2)
             .attr('x', (d) => @x(d.x))
             .attr('y', (d) => @y(d.y))
-            .attr('stroke', @colorScheme()[@colorScheme().length - 1])
+            .attr('stroke', @colors()[@colors().length - 1])
             .attr('fill', (d) => @color(d))
             .attr('fill-opacity', '0.8')
 
-      @container()
+      @container
         .selectAll('.label')
         .data(@data().filter((d) => d.name and @x(d.dx) > 40))
         .enter()
@@ -98,7 +95,7 @@ d3.flameGraph = ->
             .text((d) => @label(d))
 
       console.timeEnd('render')
-      console.log("Rendered #{@container().selectAll('.node')[0].length} elements")
+      console.log("Rendered #{@container.selectAll('.node')[0].length} elements")
       return @_breadcrumbs()._tooltip()._interactivity()
 
     _tooltip: () ->
@@ -112,12 +109,12 @@ d3.flameGraph = ->
           return 'n' # otherwise
         .offset([- @cellHeight() / 2, 0])
 
-      @container().call(@tip)
-      @container()
+      @container.call(@tip)
+      @container
         .selectAll('.node')
           .on 'mouseover', @tip.show
           .on 'mouseout', @tip.hide
-      @container()
+      @container
         .selectAll('.label')
           .on 'mouseover', @tip.show
           .on 'mouseout', @tip.hide
@@ -138,18 +135,18 @@ d3.flameGraph = ->
               idx = breadcrumb.value
               displayed = @_allData[idx]
               @_allData = @_allData.slice(0, idx)
-              @data(displayed).render()
+              @data(displayed).render(@_selector)
 
       breadcrumbs.exit().remove()
       @
 
     _interactivity: () ->
-      @container()
+      @container
         .selectAll('.node')
-        .on 'click', (d) => @data(d).render()
-      @container()
+        .on 'click', (d) => @data(d).render(@_selector)
+      @container
         .selectAll('.label')
-        .on 'click', (d) => @data(d).render()
+        .on 'click', (d) => @data(d).render(@_selector)
       @
 
     _generateAccessors: (accessors) ->

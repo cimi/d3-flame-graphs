@@ -1,0 +1,3 @@
+**/data/profile-*.json
+build/
+dist/

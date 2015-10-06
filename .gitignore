@@ -1,3 +1,4 @@
 demo/data/*.json
 build/
 dist/
+node_modules/

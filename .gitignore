@@ -1,3 +1,4 @@
 **/data/profile-*.json
 build/
 dist/
+node_modules/

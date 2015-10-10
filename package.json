@@ -1,7 +1,8 @@
 {
   "name": "d3-flame-graph",
   "version": "0.1.0",
-  "description": "Flame graph visualisation d3 plugin",
+  "description": "D3.js plugin for rendering flame graphs",
+  "repository": "cimi/d3-flame-graph",
   "main": "d3-flame-graph.js",
   "scripts": {
     "test": "mocha --require coffee-script --compilers coffee:coffee-script/register --recursive ./test"
@@ -33,6 +34,7 @@
     "gulp-remember": "^0.3.0",
     "gulp-sourcemaps": "^1.5.2",
     "gulp-uglify": "^1.4.0",
+    "publish": "^0.5.0",
     "reload": "^0.4.0"
   }
 }

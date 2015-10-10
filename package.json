@@ -1,8 +1,8 @@
 {
-  "name": "d3-flame-graph",
+  "name": "flame-graph-d3",
   "version": "0.1.0",
   "description": "D3.js plugin for rendering flame graphs",
-  "repository": "cimi/d3-flame-graph",
+  "repository": "cimi/flame-graph-d3",
   "main": "d3-flame-graph.js",
   "scripts": {
     "test": "mocha --require coffee-script --compilers coffee:coffee-script/register --recursive ./test",
@@ -16,7 +16,10 @@
     "d3",
     "plugin"
   ],
-  "author": "Alex Ciminian",
+  "author": {
+    "name": "Alex Ciminian",
+    "email": "alex.ciminian@gmail.com"
+    },
   "license": "MIT",
   "dependencies": {
     "d3": "^3.5.6"

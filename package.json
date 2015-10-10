@@ -1,6 +1,6 @@
 {
   "name": "flame-graph-d3",
-  "version": "0.1.0-beta",
+  "version": "0.1.1",
   "description": "D3.js plugin for rendering flame graphs",
   "repository": "cimi/flame-graph-d3",
   "main": "d3-flame-graph.js",
@@ -19,10 +19,11 @@
   "author": {
     "name": "Alex Ciminian",
     "email": "alex.ciminian@gmail.com"
-    },
+  },
   "license": "MIT",
   "dependencies": {
-    "d3": "^3.5.6"
+    "d3": "^3.5.6",
+    "d3-tip": "^0.6.7"
   },
   "devDependencies": {
     "browser-sync": "^2.8.2",
@@ -38,7 +39,6 @@
     "gulp-remember": "^0.3.0",
     "gulp-sourcemaps": "^1.5.2",
     "gulp-uglify": "^1.4.0",
-    "publish": "^0.5.0",
     "reload": "^0.4.0"
   }
 }

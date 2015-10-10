@@ -10,5 +10,7 @@ deployment:
   release:
     tag: /release-.*/
     commands:
-      - echo -e "$NPM_USERNAME\n$NPM_PASSWORD\n$NPM_EMAIL" | npm login
+      - echo -e "$NPM_USERNAME\n$NPM_PASSWORD\n$EMAIL" | npm login
       - npm publish
+      - echo -e "$BOWER_USERNAME\n$BOWER_PASSWORD\n$EMAIL" | bower --config.interactive login
+      - bower publish

@@ -8,7 +8,7 @@ deployment:
     commands:
       - ./scripts/deploy-demo.sh
   release:
-    tag: /release-.*/
+    tag: /v\d+\.\d+\.\d+.*/
     commands:
       - echo -e "$NPM_USERNAME\n$NPM_PASSWORD\n$EMAIL" | npm login
       - npm publish

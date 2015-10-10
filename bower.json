@@ -1,6 +1,6 @@
 {
   "name": "flame-graph-d3",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "homepage": "https://github.com/cimi/flame-graph-d3",
   "authors": [
     "Alex Ciminian <alex.ciminian@gmail.com>"

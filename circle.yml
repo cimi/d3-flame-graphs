@@ -4,6 +4,11 @@ general:
       - gh-pages
 deployment:
   demo:
-    tag: /demo.*/
+    tag: /demo/
     commands:
       - ./scripts/deploy-demo.sh
+  release:
+    tag: /release-.*/
+    commands:
+      - echo -e "$NPM_USERNAME\n$NPM_PASSWORD\n$NPM_EMAIL" | npm login
+      - npm publish

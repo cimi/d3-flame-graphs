@@ -5,7 +5,8 @@
   "repository": "cimi/d3-flame-graph",
   "main": "d3-flame-graph.js",
   "scripts": {
-    "test": "mocha --require coffee-script --compilers coffee:coffee-script/register --recursive ./test"
+    "test": "mocha --require coffee-script --compilers coffee:coffee-script/register --recursive ./test",
+    "publish-npm": "publish"
   },
   "keywords": [
     "d3",

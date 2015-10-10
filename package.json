@@ -1,6 +1,6 @@
 {
   "name": "flame-graph-d3",
-  "version": "0.1.0",
+  "version": "0.1.0-beta",
   "description": "D3.js plugin for rendering flame graphs",
   "repository": "cimi/flame-graph-d3",
   "main": "d3-flame-graph.js",

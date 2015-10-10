@@ -7,5 +7,5 @@ git config push.default simple
 
 # removes the existing demo tag, creates it again and pushes to GitHub
 git tag -d demo
-git tag -a demo
+git tag demo
 git push -f origin demo

@@ -6,12 +6,4 @@ deployment:
   demo:
     tag: /demo.*/
     commands:
-      - git config --global user.email circleci@circleci
-      - git config --global user.name CircleCI
-      - gulp demo-copy
-      - git checkout gh-pages
-      - ls | grep -v build | grep -v node_modules | xargs rm -rf
-      - mv build/* ./ && rm -r build
-      - git status && git add --all .
-      - git commit -m "Update (`date '+%F %T %Z'`) [ci skip]"
-      - git push origin gh-pages
+      - ./scripts/deploy-demo.sh

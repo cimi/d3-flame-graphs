@@ -47,7 +47,11 @@ d3.flameGraph = ->
       @_allData.push(data)
       @totalSamples = data.samples
       @_data = d3.layout.partition()
-        .sort((a,b) -> a.name.localeCompare(b.name))
+        .sort((a,b) ->
+          # move fillers to the right
+          return 1 if not a.name
+          return -1 if not b.name
+          a.name.localeCompare(b.name))
         .nodes(data)
       @
 
@@ -86,31 +90,37 @@ d3.flameGraph = ->
         .range(d3.range(@maxDepth)
           .map((cell) =>  (cell - @maxDepth + @maxCells) * @cellHeight()))
 
-      @container
+      nodes = @container
         .selectAll('.node')
         .data(@data().filter((d) =>
-          @x(d.dx) > 0.1 and @y(d.y) >= 0 and d.type != 'filler'))
+          @x(d.dx) > 0.1 and @y(d.y) >= 0 and not d.filler))
         .enter()
-          .append('rect')
+          .append('g')
             .attr('class', 'node')
-            .attr 'width', (d) => @x(d.dx)
-            .attr('height', (d) => @cellHeight())
-            .attr('x', (d) => @x(d.x))
-            .attr('y', (d) => @y(d.y))
-            .attr('fill', (d) => @color()(d))
 
-      @container
-        .selectAll('.label')
-        .data(@data().filter((d) => d.name and @x(d.dx) > 40))
-        .enter()
-          .append('text')
-            .attr('class', 'label')
-            .attr('dy', '.25em')
-            .attr('x', (d) => @x(d.x) + 2)
-            .attr('y', (d) => @y(d.y) + @cellHeight() / 2)
-            .text((d) => @label(d))
-
+      nodes.append('rect')
+        .attr 'width', (d) => @x(d.dx)
+        .attr('height', (d) => @cellHeight())
+        .attr('x', (d) => @x(d.x))
+        .attr('y', (d) => @y(d.y))
+        .attr('fill', (d) => @color()(d))
+      nodes.append('text')
+        .attr('class', 'label')
+        .attr('width', (d) => @x(d.dx))
+        .attr('dy', '.25em')
+        .attr('x', (d) => @x(d.x) + 2)
+        .attr('y', (d) => @y(d.y) + @cellHeight() / 2)
+        .text((d) => @label(d) if d.name and @x(d.dx) > 40)
+      # overlaying a transparent rectangle to capture events
+      # TODO: maybe there's a smarter way to do this?
+      nodes.append('rect')
+        .attr 'width', (d) => @x(d.dx)
+        .attr('height', (d) => @cellHeight())
+        .attr('x', (d) => @x(d.x))
+        .attr('y', (d) => @y(d.y))
+        .attr('opacity', 0)
       console.timeEnd('render')
+
       console.log("Rendered #{@container.selectAll('.node')[0].length} elements")
       @_enableNavigation()._renderBreadcrumbs() if @breadcrumbs()
       @_renderTooltip()                         if @tooltip()
@@ -137,11 +147,10 @@ d3.flameGraph = ->
       @container.call(@tip)
       @container
         .selectAll('.node')
-          .on 'mouseover', @tip.show
-          .on 'mouseout', @tip.hide
-      @container
-        .selectAll('.label')
-          .on 'mouseover', @tip.show
+          .on 'mouseover', (d) =>
+            console.log(d, d3.event)
+            d3.event.stopPropagation()
+            @tip.show(d)
           .on 'mouseout', @tip.hide
       @
 
@@ -168,10 +177,9 @@ d3.flameGraph = ->
     _enableNavigation: () ->
       @container
         .selectAll('.node')
-        .on 'click', (d) => @data(d).render(@_selector)
-      @container
-        .selectAll('.label')
-        .on 'click', (d) => @data(d).render(@_selector)
+        .on 'click', (d) =>
+          d3.event.stopPropagation()
+          @data(d).render(@_selector)
       @
 
     _generateAccessors: (accessors) ->

@@ -31,7 +31,7 @@ convert = (rawData) ->
       value: node.value - childSum
       samples: node.value - childSum
       opacity: 0
-      type: 'filler'
+      filler: true
     node.children.push(fillerNode)
 
   node

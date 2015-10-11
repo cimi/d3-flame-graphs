@@ -3,6 +3,23 @@ throw new Error("d3.js needs to be loaded") if not d3
 
 d3.flameGraph = ->
 
+  getClassAndMethodName = (fqdn) ->
+    tokens = fqdn.split(".")
+    tokens.slice(tokens.length - 2).join(".")
+
+  # Return a vector (0.0->1.0) that is a hash of the input string.
+  # The hash is computed to favor early characters over later ones, so
+  # that strings with similar starts have similar vectors. Only the first
+  # 6 characters are considered.
+  hash = (name) ->
+    [result, maxHash, weight, mod] = [0, 0, 1, 10]
+    name = getClassAndMethodName(name).slice(0, 6)
+    for i in [0..(name.length-1)]
+      result += weight * (name.charCodeAt(i) % mod)
+      maxHash += weight * (mod - 1)
+      weight *= 0.7
+    if maxHash > 0 then result / maxHash else result
+
   class FlameGraph
     constructor: () ->
       @_generateAccessors([
@@ -11,13 +28,19 @@ d3.flameGraph = ->
         'cellHeight',
         'breadcrumbs',
         'tooltip',
-        'colors'])
+        'color'])
       @_allData = []
       # defaults
       @_size        = [1200, 800]
       @_cellHeight  = 10
       @_margin      = { top: 0, right: 0, bottom: 0, left: 0 }
-      @_colors      = ['rgb(255,255,178)','rgb(254,204,92)','rgb(253,141,60)','rgb(240,59,32)','rgb(189,0,38)']
+      @_color       = (d) ->
+        val = hash(d.name)
+        r = 200 + Math.round(55 * val)
+        g = 0 + Math.round(230 * (1 - val))
+        b = 0 + Math.round(55 * (1 - val))
+        "rgb(#{r}, #{g}, #{b})"
+
 
     data: (data) ->
       return @_data if not data
@@ -36,12 +59,6 @@ d3.flameGraph = ->
       return "" if not d?.name
       label = getClassAndMethodName(d.name)
       label.substr(0, Math.round(@x(d.dx) / 4))
-
-    color: (d) -> @colors()[Math.floor(Math.random() * @colors().length)]
-
-    getClassAndMethodName = (fqdn) ->
-      tokens = fqdn.split(".")
-      tokens.slice(tokens.length - 2).join(".")
 
     render: (selector) ->
       console.time('render')
@@ -81,8 +98,7 @@ d3.flameGraph = ->
             .attr('height', (d) => @cellHeight())
             .attr('x', (d) => @x(d.x))
             .attr('y', (d) => @y(d.y))
-            .attr('stroke', @colors()[@colors().length - 1])
-            .attr('fill', (d) => @color(d))
+            .attr('fill', (d) => @color()(d))
             .attr('fill-opacity', '0.8')
 
       @container

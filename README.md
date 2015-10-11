@@ -46,9 +46,11 @@ If the values are specified, follows the [d3 conventions on margins](http://bl.o
 
 If _cellHeight_ is specified, sets the height of the rectangles in the flame graph to the provided value. If _cellHeight_ is not specified, returns the current value. Defaults to 10.
 
-<a href="#colors">#</a> flameGraph.__colors__([_[colors]_])
+<a href="#color">#</a> flameGraph.__color__([_[color(d)]_])
 
-If _colors_ are specified, it will set the colors available for rendering to the ones passed in as a parameter. If _colors_ are not specified, returns the current available colors. The parameter is expected to be an array of hex color strings. The last value in the array is used for the rectangles' stroke colour. The default colours are 5-class YlOrRd from [lib/colorbrewer](http://colorbrewer2.org/).
+If the _color_ function is specified, it will be used when determining the color for a particular node. The function should expect one parameter, the data element associated with the node. If _color_ is not specified, returns the current function.
+
+The default function uses a hash of the node's short name to generate the color. The letters are weighted (first letters matter more), the hash only uses the first six characters of the name.
 
 <a href="#data">#</a> flameGraph.__data__([_data_])
 

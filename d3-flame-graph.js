@@ -8,7 +8,7 @@
   }
 
   d3.flameGraph = function() {
-    var FlameGraph, getClassAndMethodName, hash;
+    var FlameGraph, getClassAndMethodName, hash, partitionData;
     getClassAndMethodName = function(fqdn) {
       var tokens;
       tokens = fqdn.split(".");
@@ -28,6 +28,17 @@
       } else {
         return result;
       }
+    };
+    partitionData = function(data) {
+      return d3.layout.partition().sort(function(a, b) {
+        if (!a.name) {
+          return 1;
+        }
+        if (!b.name) {
+          return -1;
+        }
+        return a.name.localeCompare(b.name);
+      }).nodes(data);
     };
     FlameGraph = (function() {
       function FlameGraph() {
@@ -56,16 +67,8 @@
           return this._data;
         }
         this._allData.push(data);
-        this.totalSamples = data.samples;
-        this._data = d3.layout.partition().sort(function(a, b) {
-          if (!a.name) {
-            return 1;
-          }
-          if (!b.name) {
-            return -1;
-          }
-          return a.name.localeCompare(b.name);
-        }).nodes(data);
+        this.total = data.value;
+        this._data = partitionData(data);
         return this;
       };
 
@@ -86,10 +89,33 @@
         return label.substr(0, Math.round(this.x(d.dx) / 4));
       };
 
+      FlameGraph.prototype.select = function(regex, onlyVisible) {
+        var result;
+        if (onlyVisible == null) {
+          onlyVisible = true;
+        }
+        if (onlyVisible) {
+          return this.container.selectAll('.node').filter(function(d) {
+            return regex.test(d.name);
+          });
+        } else {
+          result = partitionData(this._allData[0]).filter(function(d) {
+            return regex.test(d.name);
+          });
+          console.log(result);
+          return result;
+        }
+      };
+
       FlameGraph.prototype.render = function(selector) {
-        var nodes;
+        var nodes, ref;
+        if (!(this._selector || selector)) {
+          throw new Error("The container's selector needs to be provided before rendering");
+        }
         console.time('render');
-        this._selector = selector;
+        if (selector) {
+          this._selector = selector;
+        }
         d3.select(selector).select('svg').remove();
         this.container = d3.select(selector).append('svg').attr('class', 'flame-graph').attr('width', this.size()[0]).attr('height', this.size()[1]).append('g').attr('transform', "translate(" + (this.margin().left) + ", " + (this.margin().top) + ")");
         this.maxCells = Math.floor(this.height() / this.cellHeight());
@@ -153,7 +179,7 @@
             }
           };
         })(this));
-        nodes.append('rect').attr('width', (function(_this) {
+        nodes.append('rect').attr('class', 'overlay').attr('width', (function(_this) {
           return function(d) {
             return _this.x(d.dx);
           };
@@ -169,9 +195,9 @@
           return function(d) {
             return _this.y(d.y);
           };
-        })(this)).attr('opacity', 0);
+        })(this));
         console.timeEnd('render');
-        console.log("Rendered " + (this.container.selectAll('.node')[0].length) + " elements");
+        console.log("Rendered " + ((ref = this.container.selectAll('.node')[0]) != null ? ref.length : void 0) + " elements");
         if (this.breadcrumbs()) {
           this._enableNavigation()._renderBreadcrumbs();
         }
@@ -184,7 +210,7 @@
       FlameGraph.prototype._renderTooltip = function() {
         this.tip = d3.tip().attr('class', 'd3-tip').html((function(_this) {
           return function(d) {
-            return d.name + " <br /><br />" + d.totalTime + " run time<br />" + (((d.samples / _this.totalSamples) * 100).toFixed(2)) + "% of total";
+            return d.name + " <br /><br />" + d.totalTime + " run time<br />" + (((d.value / _this.total) * 100).toFixed(2)) + "% of total";
           };
         })(this)).direction((function(_this) {
           return function(d) {
@@ -218,13 +244,7 @@
           };
         })(this));
         this.container.call(this.tip);
-        this.container.selectAll('.node').on('mouseover', (function(_this) {
-          return function(d) {
-            console.log(d, d3.event);
-            d3.event.stopPropagation();
-            return _this.tip.show(d);
-          };
-        })(this)).on('mouseout', this.tip.hide);
+        this.container.selectAll('.node').on('mouseover', this.tip.show).on('mouseout', this.tip.hide);
         return this;
       };
 

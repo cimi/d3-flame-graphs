@@ -10,21 +10,16 @@ Flame graphs were invented by Brendan Gregg; you can find the original implement
 >
 > -- [Flame Graphs](http://www.brendangregg.com/flamegraphs.html), <cite>Brendan Gregg</cite>
 
-## Currently implemented features:
+## Features
 
-* Breadcrumbs - the navbar is populated with the names of the classes that were navigated into.
-* Tooltip showing the FQDN of the hovered classes, total and percentual time spent.
-
-## Roadmap:
-
-* Filtering from the UI (input with autocomplete)
-* Parametrizing the DOM element in which breadcrumbs are rendered
-* Zoom by increasing the scale of the SVG
-* Code refactoring
+* __Efficient rendering of large profiles__ - large profiles may use up a lot of CPU and memory to render if all samples get represented on the DOM. This plugin only draws samples that would be visible to the user. The performance improvement in the case of very large profiles is in the range of 10x-20x.
+* __Navigation__ - on click, the container re-renders the subgraph associated with the clicked node. An optional DOM element can be supplied for breadcrumb navigation, it will be populated with links to the previous states of the graph.
+* __Tooltips__ - showing the FQDN of the hovered classes and sample time are shown in a tooltip that triggers on mouseover.
+* __Filtering__ - nodes can be selected by name using regex. This enables name-based navigation, highlighting or adding other custom behaviour to certain nodes. See the demo for examples.
 
 ## How was this made?
 
-This plugin was built using gulp and coffeescript.
+This plugin was built using gulp and coffeescript. CircleCI runs tests on every push and manages releasing the demo page and the library to npm and bower. The demo page is hosted on GitHub pages.
 
 ## API Reference
 
@@ -54,9 +49,17 @@ The default function uses a hash of the node's short name to generate the color.
 
 <a href="#data">#</a> flameGraph.__data__([_data_])
 
-The data the flame graph is rendered from.
+The data the flame graph is rendered from. It expects a nested data in the form:
 
-__TODO__: Provide more details on how the data elements are expected to look like.
+```
+{
+      "value": <number representing the sample count of the node>,
+      "time": "<string representing the total time spent, used in the tooltip>",
+      "children": [<child object>, <child object>, ...]
+}
+```
+
+The data is supposed to have 'filler nodes', due to fact that D3 considers the value of a node to be the sum of its children rather than its explicit value. More details in [this issue](https://github.com/mbostock/d3/pull/574).
 
 <a href="#render">#</a> flameGraph.__render__(_selector_)
 
@@ -64,7 +67,7 @@ Triggers a repaint of the flame graph, using the values previously fed in as par
 
 The selector value is required, it defines the DOM element to which the SVG will be appended. Prior to rendering, any svg elements present in the given container will be cleared.
 
-### Extras
+### Extra functionality
 
 <a href="#breadcrumbs">#</a> flameGraph.__breadcrumbs__(_selector_)
 

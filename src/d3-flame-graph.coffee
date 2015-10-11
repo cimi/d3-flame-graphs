@@ -45,7 +45,7 @@ d3.flameGraph = ->
     data: (data) ->
       return @_data if not data
       @_allData.push(data)
-      @totalSamples = data.samples
+      @total = data.value
       @_data = d3.layout.partition()
         .sort((a,b) ->
           # move fillers to the right
@@ -53,6 +53,10 @@ d3.flameGraph = ->
           return -1 if not b.name
           a.name.localeCompare(b.name))
         .nodes(data)
+      @
+
+    zoom: (d) ->
+      @_data = d
       @
 
     width: () -> @size()[0] - (@margin().left + @margin().right)
@@ -63,6 +67,9 @@ d3.flameGraph = ->
       return "" if not d?.name
       label = getClassAndMethodName(d.name)
       label.substr(0, Math.round(@x(d.dx) / 4))
+
+    select: (regex) ->
+      @data().filter((d) -> regex.test(d.name))
 
     render: (selector) ->
       console.time('render')
@@ -121,7 +128,7 @@ d3.flameGraph = ->
         .attr('opacity', 0)
       console.timeEnd('render')
 
-      console.log("Rendered #{@container.selectAll('.node')[0].length} elements")
+      console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
       @_enableNavigation()._renderBreadcrumbs() if @breadcrumbs()
       @_renderTooltip()                         if @tooltip()
       @
@@ -129,7 +136,7 @@ d3.flameGraph = ->
     _renderTooltip: () ->
       @tip = d3.tip()
         .attr('class', 'd3-tip')
-        .html((d) => "#{d.name} <br /><br />#{d.totalTime} run time<br />#{((d.samples / @totalSamples) * 100).toFixed(2)}% of total")
+        .html((d) => "#{d.name} <br /><br />#{d.totalTime} run time<br />#{((d.value / @total) * 100).toFixed(2)}% of total")
         .direction (d) =>
           return 'w' if @x(d.x) + @x(d.dx) / 2 > @width() - 100
           return 'e' if @x(d.x) + @x(d.dx) / 2 < 100
@@ -147,10 +154,7 @@ d3.flameGraph = ->
       @container.call(@tip)
       @container
         .selectAll('.node')
-          .on 'mouseover', (d) =>
-            console.log(d, d3.event)
-            d3.event.stopPropagation()
-            @tip.show(d)
+          .on 'mouseover', @tip.show
           .on 'mouseout', @tip.hide
       @
 

@@ -11,8 +11,7 @@ convert = (rawData) ->
   node =
     name: rawData.n,
     value: value,
-    samples: value
-    totalTime: countdown(new Date(), timeElapsed, timeFormat)
+    time: countdown(new Date(), timeElapsed, timeFormat)
     children: []
 
   # the a field is the list of children
@@ -29,8 +28,6 @@ convert = (rawData) ->
     fillerNode =
       name: ''
       value: node.value - childSum
-      samples: node.value - childSum
-      opacity: 0
       filler: true
     node.children.push(fillerNode)
 
@@ -56,7 +53,7 @@ d3.json "data/profile.json", (err, data) ->
   profile = convert(data.profile)
   maxDepth(profile)
 
-  d3.flameGraph()
+  flameGraph = d3.flameGraph()
     .size([1200, 600]).cellHeight(10)
     .data(profile)
     .breadcrumbs('.breadcrumb')

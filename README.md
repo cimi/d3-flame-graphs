@@ -2,8 +2,6 @@
 
 This is a d3.js plugin that renders flame graphs from hierarchical data.
 
-Flame graphs were invented by Brendan Gregg; you can find the original implementation for drawing them as well as ports to different languages/environments on his website. To quote him:
-
 > Flame graphs are a visualization of profiled software, allowing the most frequent code-paths to be identified quickly and accurately. They can be generated using my open source programs on [github.com/brendangregg/FlameGraph](http://github.com/brendangregg/FlameGraph), which create interactive SVGs. See the Updates section for other implementations.
 >
 > -- [Flame Graphs](http://www.brendangregg.com/flamegraphs.html), <cite>Brendan Gregg</cite>
@@ -75,7 +73,7 @@ If _enabled_ is true, a tooltip will be rendered on top of the cells in the grap
 
 Selects the elements from the current dataset which match the given _regex_. If _isDisplayed_ is set to false, it will search all the nodes (the first dataset passed to the instance of the flame graph) and return an array of data nodes. _isDisplayed_ defaults to true, in that case it will only search the currently displayed elements and returns a d3 selection of DOM elements.
 
-[The demo code contains a usage example](https://github.com/cimi/flame-graph-d3/blob/master/demo/src/sample.coffee#L54).
+[The demo code contains a usage example](https://github.com/cimi/flame-graph-d3/blob/master/demo/src/demo.coffee#L54).
 
 <a href="#render">#</a> flameGraph.__render__(_selector_)
 

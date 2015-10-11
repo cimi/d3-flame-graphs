@@ -9,6 +9,7 @@ var del = require('del');
 
 var paths = {
   scripts:        ['src/**/*.coffee'],
+  styles:         ['src/**/*.css'],
   demoResources:  ['demo/**/*.*', 'dist/**/*.*', '!demo/src/**'],
   demoScripts:    ['demo/src/**/*.coffee'],
   dist:           'dist',
@@ -29,6 +30,8 @@ gulp.task('dist', function () {
     .pipe(coffee())
     .pipe(uglify())
     .pipe(concat('d3-flame-graph.min.js'))
+    .pipe(gulp.dest(paths.dist))
+  gulp.src(paths.styles)
     .pipe(gulp.dest(paths.dist))
 });
 // TODO: release task that creates a tag from the distributables

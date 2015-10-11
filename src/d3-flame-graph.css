@@ -1,0 +1,18 @@
+.flame-graph .label {
+  font-family: Helvetica;
+  font-size: 0.5em;
+  font-weight: lighter;
+}
+.flame-graph .node, .label {
+  cursor: pointer;
+}
+.flame-graph rect {
+  stroke: #EEEEEE;
+  fill-opacity: .8;
+}
+
+.flame-graph rect:hover {
+  stroke: #474747;
+  stroke-width: 0.5;
+  cursor: pointer;
+}

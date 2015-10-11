@@ -71,7 +71,6 @@ d3.flameGraph = ->
           .attr('class', 'flame-graph')
           .attr('width', @size()[0])
           .attr('height', @size()[1])
-          .style('border', '1px solid #0e0e0e')
         .append('g')
           .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
 
@@ -99,7 +98,6 @@ d3.flameGraph = ->
             .attr('x', (d) => @x(d.x))
             .attr('y', (d) => @y(d.y))
             .attr('fill', (d) => @color()(d))
-            .attr('fill-opacity', '0.8')
 
       @container
         .selectAll('.label')
@@ -127,7 +125,14 @@ d3.flameGraph = ->
           return 'e' if @x(d.x) + @x(d.dx) / 2 < 100
           return 's' if @y(d.y) < 100
           return 'n' # otherwise
-        .offset([- @cellHeight() / 2, 0])
+        .offset (d) =>
+          x = @x(d.x) + @x(d.dx) / 2
+          xOffset = @x(d.dx) / 2
+          yOffset = @cellHeight() / 2
+          return [0, -xOffset] if @width() - 100 < x
+          return [0,  xOffset] if x < 100
+          return [ yOffset, 0] if @y(d.y) < 100
+          return [-yOffset, 0]
 
       @container.call(@tip)
       @container

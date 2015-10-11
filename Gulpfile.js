@@ -58,6 +58,7 @@ gulp.task('demo-copy', ['dist', 'demo-scripts'], function(){
 // Rerun the task when a file changes
 gulp.task('demo-watch', function() {
   gulp.watch(paths.scripts,         ['dist']);
+  gulp.watch(paths.styles,          ['dist']);
   gulp.watch(paths.demoScripts,     ['demo-scripts']);
   gulp.watch(paths.demoResources,   ['demo-copy']);
 });

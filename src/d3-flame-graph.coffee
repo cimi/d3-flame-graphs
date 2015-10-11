@@ -20,6 +20,16 @@ d3.flameGraph = ->
       weight *= 0.7
     if maxHash > 0 then result / maxHash else result
 
+  partitionData = (data) ->
+    d3.layout
+      .partition()
+      .sort((a,b) ->
+        # move fillers to the right
+        return 1 if not a.name
+        return -1 if not b.name
+        a.name.localeCompare(b.name))
+      .nodes(data)
+
   class FlameGraph
     constructor: () ->
       @_generateAccessors([
@@ -41,18 +51,11 @@ d3.flameGraph = ->
         b = 0 + Math.round(55 * (1 - val))
         "rgb(#{r}, #{g}, #{b})"
 
-
     data: (data) ->
       return @_data if not data
       @_allData.push(data)
-      @totalSamples = data.samples
-      @_data = d3.layout.partition()
-        .sort((a,b) ->
-          # move fillers to the right
-          return 1 if not a.name
-          return -1 if not b.name
-          a.name.localeCompare(b.name))
-        .nodes(data)
+      @total = data.value
+      @_data = partitionData(data)
       @
 
     width: () -> @size()[0] - (@margin().left + @margin().right)
@@ -64,11 +67,21 @@ d3.flameGraph = ->
       label = getClassAndMethodName(d.name)
       label.substr(0, Math.round(@x(d.dx) / 4))
 
-    render: (selector) ->
-      console.time('render')
+    select: (regex, onlyVisible = true) ->
+      if onlyVisible
+        return @container.selectAll('.node').filter((d) -> regex.test(d.name))
+      else
+        # re-partition original and filter that
+        result = partitionData(@_allData[0]).filter((d) -> regex.test(d.name))
+        console.log(result)
+        return result
 
+    render: (selector) ->
+      if not (@_selector or selector)
+        throw new Error("The container's selector needs to be provided before rendering")
+      console.time('render')
       # refresh container
-      @_selector = selector
+      @_selector = selector if selector
       d3.select(selector).select('svg').remove()
       @container = d3.select(selector)
         .append('svg')
@@ -99,7 +112,7 @@ d3.flameGraph = ->
             .attr('class', 'node')
 
       nodes.append('rect')
-        .attr 'width', (d) => @x(d.dx)
+        .attr('width', (d) => @x(d.dx))
         .attr('height', (d) => @cellHeight())
         .attr('x', (d) => @x(d.x))
         .attr('y', (d) => @y(d.y))
@@ -114,14 +127,14 @@ d3.flameGraph = ->
       # overlaying a transparent rectangle to capture events
       # TODO: maybe there's a smarter way to do this?
       nodes.append('rect')
-        .attr 'width', (d) => @x(d.dx)
+        .attr('class', 'overlay')
+        .attr('width', (d) => @x(d.dx))
         .attr('height', (d) => @cellHeight())
         .attr('x', (d) => @x(d.x))
         .attr('y', (d) => @y(d.y))
-        .attr('opacity', 0)
       console.timeEnd('render')
 
-      console.log("Rendered #{@container.selectAll('.node')[0].length} elements")
+      console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
       @_enableNavigation()._renderBreadcrumbs() if @breadcrumbs()
       @_renderTooltip()                         if @tooltip()
       @
@@ -129,7 +142,7 @@ d3.flameGraph = ->
     _renderTooltip: () ->
       @tip = d3.tip()
         .attr('class', 'd3-tip')
-        .html((d) => "#{d.name} <br /><br />#{d.totalTime} run time<br />#{((d.samples / @totalSamples) * 100).toFixed(2)}% of total")
+        .html((d) => "#{d.name} <br /><br />#{d.totalTime} run time<br />#{((d.value / @total) * 100).toFixed(2)}% of total")
         .direction (d) =>
           return 'w' if @x(d.x) + @x(d.dx) / 2 > @width() - 100
           return 'e' if @x(d.x) + @x(d.dx) / 2 < 100
@@ -147,10 +160,7 @@ d3.flameGraph = ->
       @container.call(@tip)
       @container
         .selectAll('.node')
-          .on 'mouseover', (d) =>
-            console.log(d, d3.event)
-            d3.event.stopPropagation()
-            @tip.show(d)
+          .on 'mouseover', @tip.show
           .on 'mouseout', @tip.hide
       @
 

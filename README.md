@@ -1,30 +1,25 @@
-## [![Circle CI](https://circleci.com/gh/cimi/flame-graph-d3/tree/master.svg?style=svg)](https://circleci.com/gh/cimi/flame-graph-d3/tree/master) [![npm version](https://badge.fury.io/js/flame-graph-d3.svg)](https://badge.fury.io/js/flame-graph-d3) [![bower version](https://badge.fury.io/bo/flame-graph-d3.svg)](https://badge.fury.io/bo/flame-graph-d3)
-
 ## What is this?
 
 This is a d3.js plugin that renders flame graphs from hierarchical data.
-
-Flame graphs were invented by Brendan Gregg; you can find the original implementation for drawing them as well as ports to different languages/environments on his website. To quote him:
 
 > Flame graphs are a visualization of profiled software, allowing the most frequent code-paths to be identified quickly and accurately. They can be generated using my open source programs on [github.com/brendangregg/FlameGraph](http://github.com/brendangregg/FlameGraph), which create interactive SVGs. See the Updates section for other implementations.
 >
 > -- [Flame Graphs](http://www.brendangregg.com/flamegraphs.html), <cite>Brendan Gregg</cite>
 
-## Currently implemented features:
+## [See the demo](http://cimi.github.io/flame-graph-d3/).
 
-* Breadcrumbs - the navbar is populated with the names of the classes that were navigated into.
-* Tooltip showing the FQDN of the hovered classes, total and percentual time spent.
+## [![Circle CI](https://circleci.com/gh/cimi/flame-graph-d3/tree/master.svg?style=svg)](https://circleci.com/gh/cimi/flame-graph-d3/tree/master) [![npm version](https://badge.fury.io/js/flame-graph-d3.svg)](https://badge.fury.io/js/flame-graph-d3) [![bower version](https://badge.fury.io/bo/flame-graph-d3.svg)](https://badge.fury.io/bo/flame-graph-d3)
 
-## Roadmap:
+## Features
 
-* Filtering from the UI (input with autocomplete)
-* Parametrizing the DOM element in which breadcrumbs are rendered
-* Zoom by increasing the scale of the SVG
-* Code refactoring
+* __Efficient rendering of large profiles__ - large profiles may use up a lot of CPU and memory to render if all samples get represented on the DOM. This plugin only draws samples that would be visible to the user. The performance improvement in the case of very large profiles is in the range of 10x-20x.
+* __Navigation__ - on click, the container re-renders the subgraph associated with the clicked node. An optional DOM element can be supplied for breadcrumb navigation, it will be populated with links to the previous states of the graph.
+* __Tooltips__ - showing the FQDN of the hovered classes and sample time are shown in a tooltip that triggers on mouseover.
+* __Filtering__ - nodes can be selected by name using regex. This enables name-based navigation, highlighting or adding other custom behaviour to certain nodes. See the demo for examples.
 
 ## How was this made?
 
-This plugin was built using gulp and coffeescript.
+This plugin was built using gulp and coffeescript. CircleCI runs tests on every push and manages releasing the demo page and the library to npm and bower. The demo page is hosted on GitHub pages.
 
 ## API Reference
 
@@ -54,17 +49,17 @@ The default function uses a hash of the node's short name to generate the color.
 
 <a href="#data">#</a> flameGraph.__data__([_data_])
 
-The data the flame graph is rendered from.
+The data the flame graph is rendered from. It expects a nested data in the form:
 
-__TODO__: Provide more details on how the data elements are expected to look like.
+```
+{
+      "value": <number representing the sample count of the node>,
+      "time": "<string representing the total time spent, used in the tooltip>",
+      "children": [<child object>, <child object>, ...]
+}
+```
 
-<a href="#render">#</a> flameGraph.__render__(_selector_)
-
-Triggers a repaint of the flame graph, using the values previously fed in as parameters. This is the only method that triggers repaint so you need to call it after changing the other parameters to see the changes take effect.
-
-The selector value is required, it defines the DOM element to which the SVG will be appended. Prior to rendering, any svg elements present in the given container will be cleared.
-
-### Extras
+The data is supposed to have 'filler nodes', due to fact that D3 considers the value of a node to be the sum of its children rather than its explicit value. More details in [this issue](https://github.com/mbostock/d3/pull/574).
 
 <a href="#breadcrumbs">#</a> flameGraph.__breadcrumbs__(_selector_)
 
@@ -73,6 +68,18 @@ If _selector_ is specified, the flame graph will enable clickthrough navigation 
 <a href="#tooltip">#</a> flameGraph.__tooltip__(_enabled_)
 
 If _enabled_ is true, a tooltip will be rendered on top of the cells in the graph on mouseover. The d3-tip plugin is responsible for rendering the tooltip. If set to false, the tooltip is disabled and nothing is rendered on mouseover. The default value is _true_.
+
+<a href="#render">#</a> flameGraph.__select__(_regex_, [_isDisplayed_])
+
+Selects the elements from the current dataset which match the given _regex_. If _isDisplayed_ is set to false, it will search all the nodes (the first dataset passed to the instance of the flame graph) and return an array of data nodes. _isDisplayed_ defaults to true, in that case it will only search the currently displayed elements and returns a d3 selection of DOM elements.
+
+[The demo code contains a usage example](https://github.com/cimi/flame-graph-d3/blob/master/demo/src/demo.coffee#L54).
+
+<a href="#render">#</a> flameGraph.__render__(_selector_)
+
+Triggers a repaint of the flame graph, using the values previously fed in as parameters. This is the only method that triggers repaint so you need to call it after changing the other parameters to see the changes take effect.
+
+The selector value is required, it defines the DOM element to which the SVG will be appended. Prior to rendering, any svg elements present in the given container will be cleared.
 
 ### Sample invocation:
 

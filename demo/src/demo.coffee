@@ -11,8 +11,7 @@ convert = (rawData) ->
   node =
     name: rawData.n,
     value: value,
-    samples: value
-    totalTime: countdown(new Date(), timeElapsed, timeFormat)
+    time: countdown(new Date(), timeElapsed, timeFormat)
     children: []
 
   # the a field is the list of children
@@ -29,8 +28,6 @@ convert = (rawData) ->
     fillerNode =
       name: ''
       value: node.value - childSum
-      samples: node.value - childSum
-      opacity: 0
       filler: true
     node.children.push(fillerNode)
 
@@ -56,9 +53,25 @@ d3.json "data/profile.json", (err, data) ->
   profile = convert(data.profile)
   maxDepth(profile)
 
-  d3.flameGraph()
+  flameGraph = d3.flameGraph()
     .size([1200, 600]).cellHeight(10)
     .data(profile)
     .breadcrumbs('.breadcrumb')
     .tooltip(true)
     .render('#d3-flame-graph')
+
+  d3.select('#highlight')
+    .on 'click', () ->
+      nodes = flameGraph.select(/java\.util.*/)
+      nodes.classed("highlight", (d, i) -> not d3.select(this).classed("highlight"))
+
+  d3.select('#zoom')
+    .on 'click', () ->
+      # check to see if the node is not already selected
+      # this can be done more elegantly, this is quick & dirty
+      root = d3.select('.flame-graph g g:first-child text').datum()
+      return if root.name == 'java.util.concurrent.CountDownLatch.await'
+
+      # pick the first java.util.concurrent method, we know it's the one above
+      node = flameGraph.select(/java\.util\.concurrent.*/, false)[0]
+      flameGraph.data(node).render('#d3-flame-graph')

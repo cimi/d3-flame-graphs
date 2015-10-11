@@ -50,16 +50,15 @@ gulp.task('demo-scripts', function() {
     .pipe(gulp.dest(paths.demoOut));
 });
 
-gulp.task('demo-copy', ['dist', 'demo-scripts'], function(){
+gulp.task('demo-copy', ['dist', 'demo-scripts'], function() {
   return gulp.src(paths.demoResources)
     .pipe(gulp.dest(paths.demoOut));
 });
 
 // Rerun the task when a file changes
 gulp.task('demo-watch', function() {
-  gulp.watch(paths.scripts,         ['dist']);
-  gulp.watch(paths.styles,          ['dist']);
-  gulp.watch(paths.demoScripts,     ['demo-scripts']);
+  gulp.watch(paths.scripts,         ['demo-copy']);
+  gulp.watch(paths.styles,          ['demo-copy']);
   gulp.watch(paths.demoResources,   ['demo-copy']);
 });
 

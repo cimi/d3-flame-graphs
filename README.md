@@ -1,5 +1,3 @@
-## [![Circle CI](https://circleci.com/gh/cimi/flame-graph-d3/tree/master.svg?style=svg)](https://circleci.com/gh/cimi/flame-graph-d3/tree/master) [![npm version](https://badge.fury.io/js/flame-graph-d3.svg)](https://badge.fury.io/js/flame-graph-d3) [![bower version](https://badge.fury.io/bo/flame-graph-d3.svg)](https://badge.fury.io/bo/flame-graph-d3)
-
 ## What is this?
 
 This is a d3.js plugin that renders flame graphs from hierarchical data.
@@ -9,6 +7,10 @@ Flame graphs were invented by Brendan Gregg; you can find the original implement
 > Flame graphs are a visualization of profiled software, allowing the most frequent code-paths to be identified quickly and accurately. They can be generated using my open source programs on [github.com/brendangregg/FlameGraph](http://github.com/brendangregg/FlameGraph), which create interactive SVGs. See the Updates section for other implementations.
 >
 > -- [Flame Graphs](http://www.brendangregg.com/flamegraphs.html), <cite>Brendan Gregg</cite>
+
+## [See the demo](http://cimi.github.io/flame-graph-d3/).
+
+## [![Circle CI](https://circleci.com/gh/cimi/flame-graph-d3/tree/master.svg?style=svg)](https://circleci.com/gh/cimi/flame-graph-d3/tree/master) [![npm version](https://badge.fury.io/js/flame-graph-d3.svg)](https://badge.fury.io/js/flame-graph-d3) [![bower version](https://badge.fury.io/bo/flame-graph-d3.svg)](https://badge.fury.io/bo/flame-graph-d3)
 
 ## Features
 
@@ -61,14 +63,6 @@ The data the flame graph is rendered from. It expects a nested data in the form:
 
 The data is supposed to have 'filler nodes', due to fact that D3 considers the value of a node to be the sum of its children rather than its explicit value. More details in [this issue](https://github.com/mbostock/d3/pull/574).
 
-<a href="#render">#</a> flameGraph.__render__(_selector_)
-
-Triggers a repaint of the flame graph, using the values previously fed in as parameters. This is the only method that triggers repaint so you need to call it after changing the other parameters to see the changes take effect.
-
-The selector value is required, it defines the DOM element to which the SVG will be appended. Prior to rendering, any svg elements present in the given container will be cleared.
-
-### Extra functionality
-
 <a href="#breadcrumbs">#</a> flameGraph.__breadcrumbs__(_selector_)
 
 If _selector_ is specified, the flame graph will enable clickthrough navigation and will create breadcrumbs in the container referenced by the selector. The breadcrumbs are added as list items, so the container is expected to be an ordered or unordered list. Each breadcrumb reverts the flame graph to a previous state on click. This value needs to be specified for the feature to be enabled, it is disabled by default.
@@ -76,6 +70,18 @@ If _selector_ is specified, the flame graph will enable clickthrough navigation 
 <a href="#tooltip">#</a> flameGraph.__tooltip__(_enabled_)
 
 If _enabled_ is true, a tooltip will be rendered on top of the cells in the graph on mouseover. The d3-tip plugin is responsible for rendering the tooltip. If set to false, the tooltip is disabled and nothing is rendered on mouseover. The default value is _true_.
+
+<a href="#render">#</a> flameGraph.__select__(_regex_, [_isDisplayed_])
+
+Selects the elements from the current dataset which match the given _regex_. If _isDisplayed_ is set to false, it will search all the nodes (the first dataset passed to the instance of the flame graph) and return an array of data nodes. _isDisplayed_ defaults to true, in that case it will only search the currently displayed elements and returns a d3 selection of DOM elements.
+
+[The demo code contains a usage example](https://github.com/cimi/flame-graph-d3/blob/master/demo/src/sample.coffee#L54).
+
+<a href="#render">#</a> flameGraph.__render__(_selector_)
+
+Triggers a repaint of the flame graph, using the values previously fed in as parameters. This is the only method that triggers repaint so you need to call it after changing the other parameters to see the changes take effect.
+
+The selector value is required, it defines the DOM element to which the SVG will be appended. Prior to rendering, any svg elements present in the given container will be cleared.
 
 ### Sample invocation:
 

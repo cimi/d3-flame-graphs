@@ -210,7 +210,7 @@
       FlameGraph.prototype._renderTooltip = function() {
         this.tip = d3.tip().attr('class', 'd3-tip').html((function(_this) {
           return function(d) {
-            return d.name + " <br /><br />" + d.totalTime + " run time<br />" + (((d.value / _this.total) * 100).toFixed(2)) + "% of total";
+            return d.name + " <br /><br />" + d.time + " run time<br />" + (((d.value / _this.total) * 100).toFixed(2)) + "% of total";
           };
         })(this)).direction((function(_this) {
           return function(d) {

@@ -142,7 +142,7 @@ d3.flameGraph = ->
     _renderTooltip: () ->
       @tip = d3.tip()
         .attr('class', 'd3-tip')
-        .html((d) => "#{d.name} <br /><br />#{d.totalTime} run time<br />#{((d.value / @total) * 100).toFixed(2)}% of total")
+        .html((d) => "#{d.name} <br /><br />#{d.time} run time<br />#{((d.value / @total) * 100).toFixed(2)}% of total")
         .direction (d) =>
           return 'w' if @x(d.x) + @x(d.dx) / 2 > @width() - 100
           return 'e' if @x(d.x) + @x(d.dx) / 2 < 100

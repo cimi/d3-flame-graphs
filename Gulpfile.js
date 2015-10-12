@@ -21,22 +21,25 @@ gulp.task('clean', function(cb) {
 });
 
 // Create the distributable artifacts of the plugin.
-gulp.task('dist', function () {
-  gulp.src(paths.scripts)
+gulp.task('dist:main', function () {
+  return gulp.src(paths.scripts)
     .pipe(coffee())
     .pipe(concat('d3-flame-graph.js'))
     .pipe(gulp.dest(paths.dist))
-  gulp.src(paths.scripts)
+});
+gulp.task('dist:min', function () {
+  return gulp.src(paths.scripts)
     .pipe(coffee())
     .pipe(uglify())
     .pipe(concat('d3-flame-graph.min.js'))
-    .pipe(gulp.dest(paths.dist))
-  gulp.src(paths.styles)
+    .pipe(gulp.dest(paths.dist));
+});
+gulp.task('dist:styles', function () {
+  return gulp.src(paths.styles)
     .pipe(gulp.dest(paths.dist))
 });
-// TODO: release task that creates a tag from the distributables
-// and publishes to npm
 
+gulp.task('dist', ['dist:min', 'dist:main', 'dist:styles']);
 
 // building the demo page
 gulp.task('demo-scripts', function() {
@@ -56,16 +59,16 @@ gulp.task('demo-copy', ['dist', 'demo-scripts'], function() {
 });
 
 // Rerun the task when a file changes
-gulp.task('demo-watch', function() {
+gulp.task('demo-watch', ['demo-copy'], function() {
   gulp.watch(paths.scripts,         ['demo-copy']);
   gulp.watch(paths.styles,          ['demo-copy']);
   gulp.watch(paths.demoResources,   ['demo-copy']);
 });
 
-gulp.task('serve', ['demo-watch', 'demo-copy'], function() {
+gulp.task('serve', ['demo-watch'], function() {
   browserSync({ server: { baseDir: paths.demoOut } });
   gulp.watch(['*.html', '*.css', '*.js'], { cwd: paths.demoOut }, reload);
 });
 
 // The default task (called when you run `gulp` from cli)
-gulp.task('default', ['demo-watch', 'demo-scripts', 'demo-copy']);
+gulp.task('default', ['serve']);

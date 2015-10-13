@@ -65,7 +65,7 @@ d3.flameGraph = ->
     label: (d) ->
       return "" if not d?.name
       label = getClassAndMethodName(d.name)
-      label.substr(0, Math.round(@x(d.dx) / 4))
+      label.substr(0, Math.round(@x(d.dx) / (@cellHeight() / 10 * 4)))
 
     select: (regex, onlyVisible = true) ->
       if onlyVisible
@@ -119,10 +119,10 @@ d3.flameGraph = ->
         .attr('fill', (d) => @color()(d))
       nodes.append('text')
         .attr('class', 'label')
-        .attr('width', (d) => @x(d.dx))
         .attr('dy', '.25em')
         .attr('x', (d) => @x(d.x) + 2)
         .attr('y', (d) => @y(d.y) + @cellHeight() / 2)
+        .style('font-size', "#{(@cellHeight() / 10) * 0.4}em")
         .text((d) => @label(d) if d.name and @x(d.dx) > 40)
       # overlaying a transparent rectangle to capture events
       # TODO: maybe there's a smarter way to do this?
@@ -146,16 +146,14 @@ d3.flameGraph = ->
         .direction (d) =>
           return 'w' if @x(d.x) + @x(d.dx) / 2 > @width() - 100
           return 'e' if @x(d.x) + @x(d.dx) / 2 < 100
-          return 's' if @y(d.y) < 100
-          return 'n' # otherwise
+          return 's' # otherwise
         .offset (d) =>
           x = @x(d.x) + @x(d.dx) / 2
-          xOffset = @x(d.dx) / 2
-          yOffset = @cellHeight() / 2
+          xOffset = Math.max(Math.ceil(@x(d.dx) / 2), 5)
+          yOffset = Math.ceil(@cellHeight() / 2)
           return [0, -xOffset] if @width() - 100 < x
           return [0,  xOffset] if x < 100
-          return [ yOffset, 0] if @y(d.y) < 100
-          return [-yOffset, 0]
+          return [ yOffset, 0]
 
       @container.call(@tip)
       @container

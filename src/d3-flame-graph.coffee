@@ -146,16 +146,14 @@ d3.flameGraph = ->
         .direction (d) =>
           return 'w' if @x(d.x) + @x(d.dx) / 2 > @width() - 100
           return 'e' if @x(d.x) + @x(d.dx) / 2 < 100
-          return 's' if @y(d.y) < 100
-          return 'n' # otherwise
+          return 's' # otherwise
         .offset (d) =>
           x = @x(d.x) + @x(d.dx) / 2
-          xOffset = @x(d.dx) / 2
-          yOffset = @cellHeight() / 2
+          xOffset = Math.max(Math.ceil(@x(d.dx) / 2), 5)
+          yOffset = Math.ceil(@cellHeight() / 2)
           return [0, -xOffset] if @width() - 100 < x
           return [0,  xOffset] if x < 100
-          return [ yOffset, 0] if @y(d.y) < 100
-          return [-yOffset, 0]
+          return [ yOffset, 0]
 
       @container.call(@tip)
       @container

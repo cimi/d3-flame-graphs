@@ -7,7 +7,7 @@ d3.flameGraph = ->
     tokens = fqdn.split(".")
     tokens.slice(tokens.length - 2).join(".")
 
-  # Return a vector (0.0->1.0) that is a hash of the input string.
+  # Return a vector (0.0 -> 1.0) that is a hash of the input string.
   # The hash is computed to favor early characters over later ones, so
   # that strings with similar starts have similar vectors. Only the first
   # 6 characters are considered.
@@ -36,10 +36,11 @@ d3.flameGraph = ->
         'size',
         'margin',
         'cellHeight',
-        'breadcrumbs',
-        'tooltip',
+        'zoomEnabled',
+        'tooltipEnabled',
         'color'])
       @_allData = []
+      @_ancestors = []
       # defaults
       @_size        = [1200, 800]
       @_cellHeight  = 10
@@ -50,12 +51,22 @@ d3.flameGraph = ->
         g = 0 + Math.round(230 * (1 - val))
         b = 0 + Math.round(55 * (1 - val))
         "rgb(#{r}, #{g}, #{b})"
+      @_tooltipEnabled = true
+      @_zoomEnabled = true
 
     data: (data) ->
       return @_data if not data
       @_allData.push(data)
       @total = data.value
       @_data = partitionData(data)
+      @
+
+    zoom: (node) ->
+      if node in @_ancestors
+        @_ancestors = @_ancestors.slice(0, @_ancestors.indexOf(node))
+      else
+        @_ancestors.push(@data()[0])
+      @data(node).render(@_selector)
       @
 
     width: () -> @size()[0] - (@margin().left + @margin().right)
@@ -73,7 +84,6 @@ d3.flameGraph = ->
       else
         # re-partition original and filter that
         result = partitionData(@_allData[0]).filter((d) -> regex.test(d.name))
-        console.log(result)
         return result
 
     render: (selector) ->
@@ -91,9 +101,10 @@ d3.flameGraph = ->
         .append('g')
           .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
 
-
       @maxCells = Math.floor(@height() / @cellHeight())
       @maxDepth = @data()[0].maxDepth
+
+      @fontSize = (@cellHeight() / 10) * 0.4
 
       @x = d3.scale.linear()
         .domain([0, d3.max(@data(), (d) -> d.x + d.dx)])
@@ -101,42 +112,51 @@ d3.flameGraph = ->
       @y = d3.scale.quantize()
         .domain([d3.max(@data(), (d) -> d.y), 0])
         .range(d3.range(@maxDepth)
-          .map((cell) =>  (cell - @maxDepth + @maxCells) * @cellHeight()))
+          .map((cell) =>  (cell - @maxDepth + @maxCells - @_ancestors.length) * @cellHeight()))
 
-      nodes = @container
+      containers = @container
         .selectAll('.node')
         .data(@data().filter((d) =>
           @x(d.dx) > 0.1 and @y(d.y) >= 0 and not d.filler))
         .enter()
-          .append('g')
-            .attr('class', 'node')
+          .append('g').attr('class', (d, idx) -> if idx == 0 then 'root node' else 'node')
 
-      nodes.append('rect')
-        .attr('width', (d) => @x(d.dx))
-        .attr('height', (d) => @cellHeight())
-        .attr('x', (d) => @x(d.x))
-        .attr('y', (d) => @y(d.y))
+      @_renderNodes containers,
+        x: (d) => @x(d.x)
+        y: (d) => @y(d.y)
+        width: (d) => @x(d.dx)
+        height: (d) => @cellHeight()
+        text: (d) => @label(d) if d.name and @x(d.dx) > 40
+
+      console.timeEnd('render')
+      console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
+      @_renderAncestors()._enableNavigation()   if @zoomEnabled()
+      @_renderTooltip()                         if @tooltipEnabled()
+      @
+
+    _renderNodes: (containers, attrs) ->
+      containers.append('rect')
+        .attr('width', attrs.width)
+        .attr('height', @cellHeight())
+        .attr('x', attrs.x)
+        .attr('y', attrs.y)
         .attr('fill', (d) => @color()(d))
-      nodes.append('text')
+
+      containers.append('text')
         .attr('class', 'label')
-        .attr('dy', '.25em')
-        .attr('x', (d) => @x(d.x) + 2)
-        .attr('y', (d) => @y(d.y) + @cellHeight() / 2)
-        .style('font-size', "#{(@cellHeight() / 10) * 0.4}em")
-        .text((d) => @label(d) if d.name and @x(d.dx) > 40)
+        .attr('dy', "#{@fontSize / 2}em")
+        .attr('x', (d) => attrs.x(d) + 2)
+        .attr('y', (d, idx) => attrs.y(d, idx) + @cellHeight() / 2)
+        .style('font-size', "#{@fontSize}em")
+        .text(attrs.text)
       # overlaying a transparent rectangle to capture events
       # TODO: maybe there's a smarter way to do this?
-      nodes.append('rect')
+      containers.append('rect')
         .attr('class', 'overlay')
-        .attr('width', (d) => @x(d.dx))
-        .attr('height', (d) => @cellHeight())
-        .attr('x', (d) => @x(d.x))
-        .attr('y', (d) => @y(d.y))
-      console.timeEnd('render')
-
-      console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
-      @_enableNavigation()._renderBreadcrumbs() if @breadcrumbs()
-      @_renderTooltip()                         if @tooltip()
+        .attr('width', attrs.width)
+        .attr('height', @cellHeight())
+        .attr('x', attrs.x)
+        .attr('y', attrs.y)
       @
 
     _renderTooltip: () ->
@@ -162,32 +182,37 @@ d3.flameGraph = ->
           .on 'mouseout', @tip.hide
       @
 
-    _renderBreadcrumbs: () ->
-      breadcrumbData = @_allData.map((prevData, idx) -> { name: prevData.name, value: idx })
-      breadcrumbs = d3.select(@breadcrumbs())
-        .selectAll('li')
-        .data(breadcrumbData)
+    _renderAncestors: () ->
+      ancestorData = @_ancestors.map((ancestor, idx) ->
+        { name: ancestor.name, value: idx })
+      ancestors = @container
+        .selectAll('.ancestor')
+        .data(ancestorData)
 
-      breadcrumbs.enter()
-        .append('li')
-          .append('a')
-            .attr('title', (d) -> d.name)
-            .text((d) -> getClassAndMethodName(d.name))
-            .on 'click', (breadcrumb) =>
-              idx = breadcrumb.value
-              displayed = @_allData[idx]
-              @_allData = @_allData.slice(0, idx)
-              @data(displayed).render(@_selector)
+      containers = ancestors
+        .enter()
+        .append('g')
+          .attr('class', 'ancestor')
 
-      breadcrumbs.exit().remove()
+      @_renderNodes containers,
+        x: (d) => 0
+        y: (d, idx) => @height() - ((idx + 1) * @cellHeight())
+        width: @width()
+        height: @cellHeight()
+        text: (d) => "↩ #{getClassAndMethodName(d.name)}"
       @
 
     _enableNavigation: () ->
       @container
         .selectAll('.node')
-        .on 'click', (d) =>
+        .on 'click', (d, idx) =>
           d3.event.stopPropagation()
-          @data(d).render(@_selector)
+          @zoom(d) if idx > 0
+      @container
+        .selectAll('.ancestor')
+        .on 'click', (d, idx) =>
+          d3.event.stopPropagation()
+          @zoom(@_ancestors[idx])
       @
 
     _generateAccessors: (accessors) ->

@@ -57,8 +57,8 @@ d3.json "data/profile.json", (err, data) ->
     .size([1200, 600])
     .cellHeight(20)
     .data(profile)
-    .breadcrumbs('.breadcrumb')
-    .tooltip(true)
+    .zoomEnabled(true)
+    .tooltipEnabled(true)
     .render('#d3-flame-graph')
 
   d3.select('#highlight')
@@ -75,4 +75,4 @@ d3.json "data/profile.json", (err, data) ->
 
       # pick the first java.util.concurrent method, we know it's the one above
       node = flameGraph.select(/java\.util\.concurrent.*/, false)[0]
-      flameGraph.data(node).render('#d3-flame-graph')
+      flameGraph.zoom(node)

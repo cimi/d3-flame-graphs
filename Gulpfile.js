@@ -42,7 +42,7 @@ gulp.task('dist:styles', function () {
 gulp.task('dist', ['dist:min', 'dist:main', 'dist:styles']);
 
 // building the demo page
-gulp.task('demo-scripts', function() {
+gulp.task('demo-scripts', ['dist'], function() {
   // Minify and copy all JavaScript (except vendor scripts)
   // with sourcemaps all the way down
   return gulp.src(paths.demoScripts)
@@ -53,7 +53,7 @@ gulp.task('demo-scripts', function() {
     .pipe(gulp.dest(paths.demoOut));
 });
 
-gulp.task('demo-copy', ['dist', 'demo-scripts'], function() {
+gulp.task('demo-copy', ['demo-scripts'], function() {
   return gulp.src(paths.demoResources)
     .pipe(gulp.dest(paths.demoOut));
 });
@@ -63,6 +63,7 @@ gulp.task('demo-watch', ['demo-copy'], function() {
   gulp.watch(paths.scripts,         ['demo-copy']);
   gulp.watch(paths.styles,          ['demo-copy']);
   gulp.watch(paths.demoResources,   ['demo-copy']);
+  gulp.watch(paths.demoScripts,     ['demo-copy']);
 });
 
 gulp.task('serve', ['demo-watch'], function() {

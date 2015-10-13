@@ -18,7 +18,7 @@ This is a d3.js plugin that renders flame graphs from hierarchical data.
 ## Features
 
 * __Efficient rendering of large profiles__ - large profiles may use up a lot of CPU and memory to render if all samples get represented on the DOM. This plugin only draws samples that would be visible to the user. The performance improvement in the case of very large profiles is in the range of 10x-20x.
-* __Navigation__ - on click, the container re-renders the subgraph associated with the clicked node. An optional DOM element can be supplied for breadcrumb navigation, it will be populated with links to the previous states of the graph.
+* __Zooming__ - on click, the container re-renders the subgraph associated with the clicked node. The previous roots are rendered at the bottom of the graph and are clickable - you can revert to a previous state.
 * __Tooltips__ - showing the FQDN of the hovered classes and sample time are shown in a tooltip that triggers on mouseover.
 * __Filtering__ - nodes can be selected by name using regex. This enables name-based navigation, highlighting or adding other custom behaviour to certain nodes. See the demo for examples.
 
@@ -66,13 +66,19 @@ The data the flame graph is rendered from. It expects a nested data in the form:
 
 The data is supposed to have 'filler nodes', due to fact that D3 considers the value of a node to be the sum of its children rather than its explicit value. More details in [this issue](https://github.com/mbostock/d3/pull/574).
 
-<a href="#breadcrumbs">#</a> flameGraph.__breadcrumbs__(_selector_)
+<a href="#zoomEnabled">#</a> flameGraph.__zoomEnabled__(_enabled_)
 
-If _selector_ is specified, the flame graph will enable clickthrough navigation and will create breadcrumbs in the container referenced by the selector. The breadcrumbs are added as list items, so the container is expected to be an ordered or unordered list. Each breadcrumb reverts the flame graph to a previous state on click. This value needs to be specified for the feature to be enabled, it is disabled by default.
+If _enabled_ is truthy, zooming will be enabled - clicking a node or calling the zoom method programatically will re-render the graph with that node as root. The default value is _true_.
 
-<a href="#tooltip">#</a> flameGraph.__tooltip__(_enabled_)
+<a href="#zoom">#</a> flameGraph.__zoom__(_node_)
 
-If _enabled_ is true, a tooltip will be rendered on top of the cells in the graph on mouseover. The d3-tip plugin is responsible for rendering the tooltip. If set to false, the tooltip is disabled and nothing is rendered on mouseover. The default value is _true_.
+If the zoom is enabled, re-renders the graph with the given node as root. The previous roots are drawn at the bottom of the graph, by clicking on it them you can revert back to previous states. Prior to zooming, any svg elements present in the given container will be cleared.
+
+[See the demo code](https://github.com/cimi/flame-graph-d3/blob/master/demo/src/demo.coffee#L69) for an example.
+
+<a href="#tooltipEnabled">#</a> flameGraph.__tooltipEnabled__(_enabled_)
+
+If _enabled_ is truthy, a tooltip will be shown on mouseover for each cell. The ancestor nodes do not get a tooltip. The d3-tip plugin is responsible for rendering the tooltip. If set to false, the tooltip is disabled and nothing is rendered on mouseover. The default value is _true_.
 
 <a href="#render">#</a> flameGraph.__select__(_regex_, [_isDisplayed_])
 
@@ -82,18 +88,18 @@ Selects the elements from the current dataset which match the given _regex_. If 
 
 <a href="#render">#</a> flameGraph.__render__(_selector_)
 
-Triggers a repaint of the flame graph, using the values previously fed in as parameters. This is the only method that triggers repaint so you need to call it after changing the other parameters to see the changes take effect.
+Triggers a repaint of the flame graph, using the values previously fed in as parameters. This is the only method besides zoom that triggers repaint so you need to call it after changing the other parameters to see the changes take effect.
 
 The selector value is required, it defines the DOM element to which the SVG will be appended. Prior to rendering, any svg elements present in the given container will be cleared.
 
 ### Sample invocation:
 
 ```
-d3.flameGraph()
-  .size([1200, 600]).cellHeight(10)
-  .colors(["#ffffcc","#ffeda0","#fed976","#feb24c","#fd8d3c","#fc4e2a","#e31a1c","#bd0026"])
-  .data(profile)
-  .breadcrumbs('.breadcrumb')
-  .tooltip(true)
-  .render('#d3-flame-graph')
+  flameGraph = d3.flameGraph()
+    .size([1200, 600])
+    .cellHeight(20)
+    .data(profile)
+    .zoomEnabled(true)
+    .tooltipEnabled(true)
+    .render('#d3-flame-graph')
 ```

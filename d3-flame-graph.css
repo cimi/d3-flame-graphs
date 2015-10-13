@@ -2,8 +2,7 @@
   border: 1px solid #0e0e0e;
 }
 .flame-graph .label {
-  font-family: Helvetica;
-  font-size: 0.5em;
+  font-family: Verdana;
   font-weight: lighter;
 }
 .flame-graph .node, .label {

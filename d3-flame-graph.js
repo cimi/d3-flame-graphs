@@ -86,7 +86,7 @@
           return "";
         }
         label = getClassAndMethodName(d.name);
-        return label.substr(0, Math.round(this.x(d.dx) / 4));
+        return label.substr(0, Math.round(this.x(d.dx) / (this.cellHeight() / 10 * 4)));
       };
 
       FlameGraph.prototype.select = function(regex, onlyVisible) {
@@ -160,11 +160,7 @@
             return _this.color()(d);
           };
         })(this));
-        nodes.append('text').attr('class', 'label').attr('width', (function(_this) {
-          return function(d) {
-            return _this.x(d.dx);
-          };
-        })(this)).attr('dy', '.25em').attr('x', (function(_this) {
+        nodes.append('text').attr('class', 'label').attr('dy', '.25em').attr('x', (function(_this) {
           return function(d) {
             return _this.x(d.x) + 2;
           };
@@ -172,7 +168,7 @@
           return function(d) {
             return _this.y(d.y) + _this.cellHeight() / 2;
           };
-        })(this)).text((function(_this) {
+        })(this)).style('font-size', ((this.cellHeight() / 10) * 0.4) + "em").text((function(_this) {
           return function(d) {
             if (d.name && _this.x(d.dx) > 40) {
               return _this.label(d);
@@ -220,27 +216,21 @@
             if (_this.x(d.x) + _this.x(d.dx) / 2 < 100) {
               return 'e';
             }
-            if (_this.y(d.y) < 100) {
-              return 's';
-            }
-            return 'n';
+            return 's';
           };
         })(this)).offset((function(_this) {
           return function(d) {
             var x, xOffset, yOffset;
             x = _this.x(d.x) + _this.x(d.dx) / 2;
-            xOffset = _this.x(d.dx) / 2;
-            yOffset = _this.cellHeight() / 2;
+            xOffset = Math.max(Math.ceil(_this.x(d.dx) / 2), 5);
+            yOffset = Math.ceil(_this.cellHeight() / 2);
             if (_this.width() - 100 < x) {
               return [0, -xOffset];
             }
             if (x < 100) {
               return [0, xOffset];
             }
-            if (_this.y(d.y) < 100) {
-              return [yOffset, 0];
-            }
-            return [-yOffset, 0];
+            return [yOffset, 0];
           };
         })(this));
         this.container.call(this.tip);

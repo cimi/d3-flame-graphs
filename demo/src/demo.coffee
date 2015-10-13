@@ -54,7 +54,8 @@ d3.json "data/profile.json", (err, data) ->
   maxDepth(profile)
 
   flameGraph = d3.flameGraph()
-    .size([1200, 600]).cellHeight(10)
+    .size([1200, 600])
+    .cellHeight(20)
     .data(profile)
     .breadcrumbs('.breadcrumb')
     .tooltip(true)

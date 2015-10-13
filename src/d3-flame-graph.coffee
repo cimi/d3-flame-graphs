@@ -99,9 +99,10 @@ d3.flameGraph = ->
         .append('g')
           .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
 
-
       @maxCells = Math.floor(@height() / @cellHeight())
       @maxDepth = @data()[0].maxDepth
+
+      @fontSize = (@cellHeight() / 10) * 0.4
 
       @x = d3.scale.linear()
         .domain([0, d3.max(@data(), (d) -> d.x + d.dx)])
@@ -127,10 +128,10 @@ d3.flameGraph = ->
 
       nodes.append('text')
         .attr('class', 'label')
-        .attr('dy', '.25em')
+        .attr('dy', "#{@fontSize / 2}em")
         .attr('x', (d) => @x(d.x) + 2)
         .attr('y', (d) => @y(d.y) + @cellHeight() / 2)
-        .style('font-size', "#{(@cellHeight() / 10) * 0.4}em")
+        .style('font-size', "#{@fontSize}em")
         .text((d) => @label(d) if d.name and @x(d.dx) > 40)
       # overlaying a transparent rectangle to capture events
       # TODO: maybe there's a smarter way to do this?
@@ -173,7 +174,6 @@ d3.flameGraph = ->
 
     _renderBreadcrumbs: () ->
       breadcrumbData = @_ancestors.map((ancestor, idx) ->
-        console.log(ancestor)
         { name: ancestor.name, value: idx })
       breadcrumbs = @container
         .selectAll('.ancestor')
@@ -193,10 +193,10 @@ d3.flameGraph = ->
 
       group.append('text')
         .attr('class', 'label')
-        .attr('dy', '.25em')
+        .attr('dy', '#{@fontSize / 2}em')
         .attr('x', (d) => 2)
         .attr('y', (d, idx) => @height() - ((idx + 1) * @cellHeight()) + @cellHeight() / 2)
-        .style('font-size', "#{(@cellHeight() / 10) * 0.4}em")
+        .style('font-size', "#{@fontSize}em")
         .text((d) => "↩ #{getClassAndMethodName(d.name)}")
 
       breadcrumbs.exit().remove()
@@ -211,7 +211,6 @@ d3.flameGraph = ->
       @container
         .selectAll('.ancestor')
         .on 'click', (d, idx) =>
-          console.log(d)
           d3.event.stopPropagation()
           @zoom(@_ancestors[idx])
       @

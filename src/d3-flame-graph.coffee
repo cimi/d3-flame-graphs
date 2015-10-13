@@ -7,7 +7,7 @@ d3.flameGraph = ->
     tokens = fqdn.split(".")
     tokens.slice(tokens.length - 2).join(".")
 
-  # Return a vector (0.0->1.0) that is a hash of the input string.
+  # Return a vector (0.0 -> 1.0) that is a hash of the input string.
   # The hash is computed to favor early characters over later ones, so
   # that strings with similar starts have similar vectors. Only the first
   # 6 characters are considered.
@@ -61,7 +61,7 @@ d3.flameGraph = ->
 
     zoom: (node) ->
       if node in @_ancestors
-        @_ancestors.slice(0, @_ancestors.indexOf(node))
+        @_ancestors = @_ancestors.slice(0, @_ancestors.indexOf(node))
       else
         @_ancestors.push(@data()[0])
       @data(node).render(@_selector)
@@ -144,7 +144,7 @@ d3.flameGraph = ->
       console.timeEnd('render')
 
       console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
-      @_enableNavigation()._renderBreadcrumbs() if @breadcrumbs()
+      @_renderBreadcrumbs()._enableNavigation() if @breadcrumbs()
       @_renderTooltip()                         if @tooltip()
       @
 
@@ -208,6 +208,12 @@ d3.flameGraph = ->
         .on 'click', (d, idx) =>
           d3.event.stopPropagation()
           @zoom(d) if idx > 0
+      @container
+        .selectAll('.ancestor')
+        .on 'click', (d, idx) =>
+          console.log(d)
+          d3.event.stopPropagation()
+          @zoom(@_ancestors[idx])
       @
 
     _generateAccessors: (accessors) ->

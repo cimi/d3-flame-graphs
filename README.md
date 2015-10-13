@@ -6,14 +6,14 @@ This is a d3.js plugin that renders flame graphs from hierarchical data.
 >
 > -- [Flame Graphs](http://www.brendangregg.com/flamegraphs.html), <cite>Brendan Gregg</cite>
 
-## [See the demo!](http://cimi.github.io/flame-graph-d3/)
+## [See the demo!](http://cimi.github.io/d3-flame-graphs/)
 
-<a href="http://cimi.github.io/flame-graph-d3/">
+<a href="http://cimi.github.io/d3-flame-graphs/">
 ![Flame Graph Representation](flame-graph-screenshot.png?raw=true "See the demo!")
 </a>
 
 ## Build status
-[![Circle CI](https://circleci.com/gh/cimi/flame-graph-d3/tree/master.svg?style=svg)](https://circleci.com/gh/cimi/flame-graph-d3/tree/master) [![npm version](https://badge.fury.io/js/flame-graph-d3.svg)](https://badge.fury.io/js/flame-graph-d3) [![bower version](https://badge.fury.io/bo/flame-graph-d3.svg)](https://badge.fury.io/bo/flame-graph-d3)
+[![Circle CI](https://circleci.com/gh/cimi/d3-flame-graphs/tree/master.svg?style=svg)](https://circleci.com/gh/cimi/d3-flame-graphs/tree/master) [![npm version](https://badge.fury.io/js/d3-flame-graphs.svg)](https://badge.fury.io/js/d3-flame-graphs) [![bower version](https://badge.fury.io/bo/d3-flame-graphs.svg)](https://badge.fury.io/bo/d3-flame-graphs)
 
 ## Features
 
@@ -74,7 +74,7 @@ If _enabled_ is truthy, zooming will be enabled - clicking a node or calling the
 
 If the zoom is enabled, re-renders the graph with the given node as root. The previous roots are drawn at the bottom of the graph, by clicking on it them you can revert back to previous states. Prior to zooming, any svg elements present in the given container will be cleared.
 
-[See the demo code](https://github.com/cimi/flame-graph-d3/blob/master/demo/src/demo.coffee#L69) for an example.
+[See the demo code](https://github.com/cimi/d3-flame-graphs/blob/master/demo/src/demo.coffee#L69) for an example.
 
 <a href="#tooltip">#</a> flameGraph.__tooltip__(_function_)
 
@@ -84,7 +84,7 @@ If a _function_ is provided, a tooltip will be shown on mouseover for each cell.
 
 Selects the elements from the current dataset which match the given _regex_. If _isDisplayed_ is set to false, it will search all the nodes (the first dataset passed to the instance of the flame graph) and return an array of data nodes. _isDisplayed_ defaults to true, in that case it will only search the currently displayed elements and returns a d3 selection of DOM elements.
 
-[The demo code contains a usage example](https://github.com/cimi/flame-graph-d3/blob/master/demo/src/demo.coffee#L54).
+[The demo code contains a usage example](https://github.com/cimi/d3-flame-graphs/blob/master/demo/src/demo.coffee#L54).
 
 <a href="#render">#</a> flameGraph.__render__(_selector_)
 

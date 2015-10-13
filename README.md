@@ -19,7 +19,7 @@ This is a d3.js plugin that renders flame graphs from hierarchical data.
 
 * __Efficient rendering of large profiles__ - large profiles may use up a lot of CPU and memory to render if all samples get represented on the DOM. This plugin only draws samples that would be visible to the user. The performance improvement in the case of very large profiles is in the range of 10x-20x.
 * __Zooming__ - on click, the container re-renders the subgraph associated with the clicked node. The previous roots are rendered at the bottom of the graph and are clickable - you can revert to a previous state.
-* __Tooltips__ - showing the FQDN of the hovered classes and sample time are shown in a tooltip that triggers on mouseover.
+* __Tooltips__ - when hovering over nodes a tooltip can be displayed. The tooltip's contents are parametrizable.
 * __Filtering__ - nodes can be selected by name using regex. This enables name-based navigation, highlighting or adding other custom behaviour to certain nodes. See the demo for examples.
 
 ## How was this made?
@@ -76,9 +76,9 @@ If the zoom is enabled, re-renders the graph with the given node as root. The pr
 
 [See the demo code](https://github.com/cimi/flame-graph-d3/blob/master/demo/src/demo.coffee#L69) for an example.
 
-<a href="#tooltipEnabled">#</a> flameGraph.__tooltipEnabled__(_enabled_)
+<a href="#tooltip">#</a> flameGraph.__tooltip__(_function_)
 
-If _enabled_ is truthy, a tooltip will be shown on mouseover for each cell. The ancestor nodes do not get a tooltip. The d3-tip plugin is responsible for rendering the tooltip. If set to false, the tooltip is disabled and nothing is rendered on mouseover. The default value is _true_.
+If a _function_ is provided, a tooltip will be shown on mouseover for each cell. The ancestor nodes do not get a tooltip. The function receives a data node as its parameter and needs to return an HTML string that will be rendered inside the tooltip. The d3-tip plugin is responsible for rendering the tooltip. If set to false or not called, the tooltip is disabled and nothing is rendered on mouseover.
 
 <a href="#render">#</a> flameGraph.__select__(_regex_, [_isDisplayed_])
 

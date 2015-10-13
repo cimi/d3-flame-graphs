@@ -61,8 +61,6 @@ d3.json "data/profile.json", (err, data) ->
     .tooltip(true)
     .render('#d3-flame-graph')
 
-  debugger
-
   d3.select('#highlight')
     .on 'click', () ->
       nodes = flameGraph.select(/java\.util.*/)

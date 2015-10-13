@@ -116,7 +116,7 @@ d3.flameGraph = ->
         .data(@data().filter((d) =>
           @x(d.dx) > 0.1 and @y(d.y) >= 0 and not d.filler))
         .enter()
-          .append('g').attr('class', 'node')
+          .append('g').attr('class', (d, idx) -> if idx == 0 then 'root node' else 'node')
 
       nodes.append('rect')
         .attr('width', (d) => @x(d.dx))
@@ -205,9 +205,9 @@ d3.flameGraph = ->
     _enableNavigation: () ->
       @container
         .selectAll('.node')
-        .on 'click', (d) =>
+        .on 'click', (d, idx) =>
           d3.event.stopPropagation()
-          @zoom(d)
+          @zoom(d) if idx > 0
       @
 
     _generateAccessors: (accessors) ->

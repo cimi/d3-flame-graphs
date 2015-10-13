@@ -5,19 +5,27 @@
   font-family: Verdana;
   font-weight: lighter;
 }
+.flame-graph .root.node {
+  cursor: auto;
+}
 .flame-graph .node, .label {
   cursor: pointer;
 }
+
 .flame-graph rect {
   stroke: #EEEEEE;
   fill-opacity: .8;
 }
+
 .flame-graph rect.overlay {
   fill-opacity: 0;
   stroke-opacity: 0;
 }
+/* clicking the base node is disabled as it does not make sense to zoom on it */
+.flame-graph .root.node:hover > rect:first-child {
+  cursor: auto;
+}
 .flame-graph g:hover > rect:first-child, .flame-graph g.highlight > rect:first-child {
-  cursor: pointer;
   fill: #FFD700;
   fill-opacity: 1;
 }

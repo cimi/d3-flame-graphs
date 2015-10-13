@@ -69,8 +69,8 @@ d3.flameGraph = ->
         'zoomEnabled',
         'tooltipEnabled',
         'color'])
-      @_allData = []
       @_ancestors = []
+
       # defaults
       @_size        = [1200, 800]
       @_cellHeight  = 10
@@ -86,12 +86,13 @@ d3.flameGraph = ->
 
     data: (data) ->
       return @_data if not data
-      @_allData.push(data)
+      @original = data if not @original
       @total = data.value
       @_data = partitionData(addMaxDepth(addFillerNodes(data)))
       @
 
     zoom: (node) ->
+      throw new Error("Zoom is disabled!") if not @zoomEnabled()
       if node in @_ancestors
         @_ancestors = @_ancestors.slice(0, @_ancestors.indexOf(node))
       else
@@ -113,7 +114,7 @@ d3.flameGraph = ->
         return @container.selectAll('.node').filter((d) -> regex.test(d.name))
       else
         # re-partition original and filter that
-        result = partitionData(@_allData[0]).filter((d) -> regex.test(d.name))
+        result = partitionData(@original).filter((d) -> regex.test(d.name))
         return result
 
     render: (selector) ->
@@ -192,7 +193,7 @@ d3.flameGraph = ->
     _renderTooltip: () ->
       @tip = d3.tip()
         .attr('class', 'd3-tip')
-        .html((d) => "#{d.name} <br /><br />#{d.time} run time<br />#{((d.value / @total) * 100).toFixed(2)}% of total")
+        .html((d) => "#{d.name} <br /><br />#{d.value} samples<br />#{((d.value / @total) * 100).toFixed(2)}% of total")
         .direction (d) =>
           return 'w' if @x(d.x) + @x(d.dx) / 2 > @width() - 100
           return 'e' if @x(d.x) + @x(d.dx) / 2 < 100

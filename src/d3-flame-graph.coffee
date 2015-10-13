@@ -54,9 +54,8 @@ d3.flameGraph = ->
     d3.layout
       .partition()
       .sort((a,b) ->
-        # move fillers to the right
-        return 1  if a.filler
-        return -1 if b.filler
+        return 1  if a.filler # move fillers to the right
+        return -1 if b.filler # move fillers to the right
         a.name.localeCompare(b.name))
       .nodes(data)
 
@@ -67,7 +66,7 @@ d3.flameGraph = ->
         'margin',
         'cellHeight',
         'zoomEnabled',
-        'tooltipEnabled',
+        'tooltip'
         'color'])
       @_ancestors = []
 
@@ -87,7 +86,6 @@ d3.flameGraph = ->
     data: (data) ->
       return @_data if not data
       @original = data if not @original
-      @total = data.value
       @_data = partitionData(addMaxDepth(addFillerNodes(data)))
       @
 
@@ -162,7 +160,7 @@ d3.flameGraph = ->
       console.timeEnd('render')
       console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
       @_renderAncestors()._enableNavigation()   if @zoomEnabled()
-      @_renderTooltip()                         if @tooltipEnabled()
+      @_renderTooltip()                         if @tooltip()
       @
 
     _renderNodes: (containers, attrs) ->
@@ -193,7 +191,7 @@ d3.flameGraph = ->
     _renderTooltip: () ->
       @tip = d3.tip()
         .attr('class', 'd3-tip')
-        .html((d) => "#{d.name} <br /><br />#{d.value} samples<br />#{((d.value / @total) * 100).toFixed(2)}% of total")
+        .html(@tooltip())
         .direction (d) =>
           return 'w' if @x(d.x) + @x(d.dx) / 2 > @width() - 100
           return 'e' if @x(d.x) + @x(d.dx) / 2 < 100

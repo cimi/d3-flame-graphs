@@ -24,13 +24,16 @@ convert = (rawData) ->
   node
 
 d3.json "data/profile.json", (err, data) ->
-
+  profile = convert(data.profile)
+  tooltip = (d) -> "#{d.name} <br /><br />
+    #{d.value} samples<br />
+    #{((d.value / profile.value) * 100).toFixed(2)}% of total"
   flameGraph = d3.flameGraph()
     .size([1200, 600])
     .cellHeight(20)
-    .data(convert(data.profile))
+    .data(profile)
     .zoomEnabled(true)
-    .tooltipEnabled(true)
+    .tooltip(tooltip)
     .render('#d3-flame-graph')
 
   d3.select('#highlight')

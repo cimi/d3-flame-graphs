@@ -36,8 +36,8 @@ d3.flameGraph = ->
         'size',
         'margin',
         'cellHeight',
-        'breadcrumbs',
-        'tooltip',
+        'zoomEnabled',
+        'tooltipEnabled',
         'color'])
       @_allData = []
       @_ancestors = []
@@ -112,14 +112,14 @@ d3.flameGraph = ->
         .range(d3.range(@maxDepth)
           .map((cell) =>  (cell - @maxDepth + @maxCells - @_ancestors.length) * @cellHeight()))
 
-      nodes = @container
+      containers = @container
         .selectAll('.node')
         .data(@data().filter((d) =>
           @x(d.dx) > 0.1 and @y(d.y) >= 0 and not d.filler))
         .enter()
           .append('g').attr('class', (d, idx) -> if idx == 0 then 'root node' else 'node')
 
-      @_renderNodes nodes,
+      @_renderNodes containers,
         x: (d) => @x(d.x)
         y: (d) => @y(d.y)
         width: (d) => @x(d.dx)
@@ -127,21 +127,20 @@ d3.flameGraph = ->
         text: (d) => @label(d) if d.name and @x(d.dx) > 40
 
       console.timeEnd('render')
-
       console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
-      @_renderBreadcrumbs()._enableNavigation() if @breadcrumbs()
-      @_renderTooltip()                         if @tooltip()
+      @_renderAncestors()._enableNavigation()   if @zoomEnabled()
+      @_renderTooltip()                         if @tooltipEnabled()
       @
 
-    _renderNodes: (nodes, attrs) ->
-      nodes.append('rect')
+    _renderNodes: (containers, attrs) ->
+      containers.append('rect')
         .attr('width', attrs.width)
         .attr('height', @cellHeight())
         .attr('x', attrs.x)
         .attr('y', attrs.y)
         .attr('fill', (d) => @color()(d))
 
-      nodes.append('text')
+      containers.append('text')
         .attr('class', 'label')
         .attr('dy', "#{@fontSize / 2}em")
         .attr('x', (d) => attrs.x(d) + 2)
@@ -150,7 +149,7 @@ d3.flameGraph = ->
         .text(attrs.text)
       # overlaying a transparent rectangle to capture events
       # TODO: maybe there's a smarter way to do this?
-      nodes.append('rect')
+      containers.append('rect')
         .attr('class', 'overlay')
         .attr('width', attrs.width)
         .attr('height', @cellHeight())
@@ -181,21 +180,21 @@ d3.flameGraph = ->
           .on 'mouseout', @tip.hide
       @
 
-    _renderBreadcrumbs: () ->
-      breadcrumbData = @_ancestors.map((ancestor, idx) ->
+    _renderAncestors: () ->
+      ancestorData = @_ancestors.map((ancestor, idx) ->
         { name: ancestor.name, value: idx })
-      breadcrumbs = @container
+      ancestors = @container
         .selectAll('.ancestor')
-        .data(breadcrumbData)
+        .data(ancestorData)
 
-      group = breadcrumbs
+      containers = ancestors
         .enter()
         .append('g')
           .attr('class', 'ancestor')
 
-      @_renderNodes group,
+      @_renderNodes containers,
         x: (d) => 0
-        y: (d, idx) => debugger; @height() - ((idx + 1) * @cellHeight())
+        y: (d, idx) => @height() - ((idx + 1) * @cellHeight())
         width: @width()
         height: @cellHeight()
         text: (d) => "↩ #{getClassAndMethodName(d.name)}"

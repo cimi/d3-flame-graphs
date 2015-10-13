@@ -57,8 +57,8 @@ d3.json "data/profile.json", (err, data) ->
     .size([1200, 600])
     .cellHeight(20)
     .data(profile)
-    .breadcrumbs('.breadcrumb')
-    .tooltip(true)
+    .zoomEnabled(true)
+    .tooltipEnabled(true)
     .render('#d3-flame-graph')
 
   d3.select('#highlight')

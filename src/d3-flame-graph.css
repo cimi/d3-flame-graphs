@@ -8,7 +8,7 @@
 .flame-graph .root.node {
   cursor: auto;
 }
-.flame-graph .node, .label {
+.flame-graph .node, .flame-graph .ancestor {
   cursor: pointer;
 }
 

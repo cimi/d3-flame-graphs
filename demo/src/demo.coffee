@@ -16,47 +16,19 @@ convert = (rawData) ->
 
   # the a field is the list of children
   return node if not rawData.a
-
-  childSum = 0
   for child in rawData.a
     subTree = convert(child)
     if subTree
       node.children.push(subTree)
-      childSum += subTree.value
-
-  if childSum < node.value
-    fillerNode =
-      name: ''
-      value: node.value - childSum
-      filler: true
-    node.children.push(fillerNode)
 
   node
 
-# augments each node in the tree with the maximum distance
-# it is from a terminal node
-maxDepth = (node) ->
-  return 0 if not node
-  return 1 if not node.children
-  return node.maxDepth if node.maxDepth
-
-  max = 0
-  node.children.forEach (child) ->
-    depth = maxDepth(child)
-    max = depth if depth > max
-
-  node.maxDepth = max + 1
-  return node.maxDepth
-
 d3.json "data/profile.json", (err, data) ->
-
-  profile = convert(data.profile)
-  maxDepth(profile)
 
   flameGraph = d3.flameGraph()
     .size([1200, 600])
     .cellHeight(20)
-    .data(profile)
+    .data(convert(data.profile))
     .zoomEnabled(true)
     .tooltipEnabled(true)
     .render('#d3-flame-graph')

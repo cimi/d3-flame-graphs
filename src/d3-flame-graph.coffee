@@ -51,6 +51,8 @@ d3.flameGraph = ->
         g = 0 + Math.round(230 * (1 - val))
         b = 0 + Math.round(55 * (1 - val))
         "rgb(#{r}, #{g}, #{b})"
+      @_tooltipEnabled = true
+      @_zoomEnabled = true
 
     data: (data) ->
       return @_data if not data

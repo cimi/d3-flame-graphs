@@ -40,6 +40,7 @@ d3.flameGraph = ->
         'tooltip',
         'color'])
       @_allData = []
+      @_ancestors = []
       # defaults
       @_size        = [1200, 800]
       @_cellHeight  = 10
@@ -58,6 +59,14 @@ d3.flameGraph = ->
       @_data = partitionData(data)
       @
 
+    zoom: (node) ->
+      if node in @_ancestors
+        @_ancestors.slice(0, @_ancestors.indexOf(node))
+      else
+        @_ancestors.push(@data()[0])
+      @data(node).render(@_selector)
+      @
+
     width: () -> @size()[0] - (@margin().left + @margin().right)
 
     height: () -> @size()[1] - (@margin().top + @margin().bottom)
@@ -73,7 +82,6 @@ d3.flameGraph = ->
       else
         # re-partition original and filter that
         result = partitionData(@_allData[0]).filter((d) -> regex.test(d.name))
-        console.log(result)
         return result
 
     render: (selector) ->
@@ -101,15 +109,14 @@ d3.flameGraph = ->
       @y = d3.scale.quantize()
         .domain([d3.max(@data(), (d) -> d.y), 0])
         .range(d3.range(@maxDepth)
-          .map((cell) =>  (cell - @maxDepth + @maxCells) * @cellHeight()))
+          .map((cell) =>  (cell - @maxDepth + @maxCells - @_ancestors.length) * @cellHeight()))
 
       nodes = @container
         .selectAll('.node')
         .data(@data().filter((d) =>
           @x(d.dx) > 0.1 and @y(d.y) >= 0 and not d.filler))
         .enter()
-          .append('g')
-            .attr('class', 'node')
+          .append('g').attr('class', 'node')
 
       nodes.append('rect')
         .attr('width', (d) => @x(d.dx))
@@ -117,6 +124,7 @@ d3.flameGraph = ->
         .attr('x', (d) => @x(d.x))
         .attr('y', (d) => @y(d.y))
         .attr('fill', (d) => @color()(d))
+
       nodes.append('text')
         .attr('class', 'label')
         .attr('dy', '.25em')
@@ -132,6 +140,7 @@ d3.flameGraph = ->
         .attr('height', (d) => @cellHeight())
         .attr('x', (d) => @x(d.x))
         .attr('y', (d) => @y(d.y))
+
       console.timeEnd('render')
 
       console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
@@ -163,21 +172,32 @@ d3.flameGraph = ->
       @
 
     _renderBreadcrumbs: () ->
-      breadcrumbData = @_allData.map((prevData, idx) -> { name: prevData.name, value: idx })
-      breadcrumbs = d3.select(@breadcrumbs())
-        .selectAll('li')
+      breadcrumbData = @_ancestors.map((ancestor, idx) ->
+        console.log(ancestor)
+        { name: ancestor.name, value: idx })
+      breadcrumbs = @container
+        .selectAll('.ancestor')
         .data(breadcrumbData)
 
-      breadcrumbs.enter()
-        .append('li')
-          .append('a')
-            .attr('title', (d) -> d.name)
-            .text((d) -> getClassAndMethodName(d.name))
-            .on 'click', (breadcrumb) =>
-              idx = breadcrumb.value
-              displayed = @_allData[idx]
-              @_allData = @_allData.slice(0, idx)
-              @data(displayed).render(@_selector)
+      group = breadcrumbs
+        .enter()
+        .append('g')
+          .attr('class', 'ancestor')
+
+      group.append('rect')
+        .attr('width', @width())
+        .attr('height', @cellHeight())
+        .attr('x', 0)
+        .attr('y', (d, idx) => @height() - ((idx + 1) * @cellHeight()))
+        .attr('fill', (d) => @color()(d))
+
+      group.append('text')
+        .attr('class', 'label')
+        .attr('dy', '.25em')
+        .attr('x', (d) => 2)
+        .attr('y', (d, idx) => @height() - ((idx + 1) * @cellHeight()) + @cellHeight() / 2)
+        .style('font-size', "#{(@cellHeight() / 10) * 0.4}em")
+        .text((d) => "↩ #{getClassAndMethodName(d.name)}")
 
       breadcrumbs.exit().remove()
       @
@@ -187,7 +207,7 @@ d3.flameGraph = ->
         .selectAll('.node')
         .on 'click', (d) =>
           d3.event.stopPropagation()
-          @data(d).render(@_selector)
+          @zoom(d)
       @
 
     _generateAccessors: (accessors) ->

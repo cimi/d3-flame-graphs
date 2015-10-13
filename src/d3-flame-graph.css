@@ -22,6 +22,9 @@
   fill-opacity: 1;
 }
 
+.ancestor {
+  opacity: 0.6;
+}
 .d3-tip {
   line-height: 1;
   font-family: Verdana;

@@ -61,6 +61,8 @@ d3.json "data/profile.json", (err, data) ->
     .tooltip(true)
     .render('#d3-flame-graph')
 
+  debugger
+
   d3.select('#highlight')
     .on 'click', () ->
       nodes = flameGraph.select(/java\.util.*/)
@@ -75,4 +77,4 @@ d3.json "data/profile.json", (err, data) ->
 
       # pick the first java.util.concurrent method, we know it's the one above
       node = flameGraph.select(/java\.util\.concurrent.*/, false)[0]
-      flameGraph.data(node).render('#d3-flame-graph')
+      flameGraph.zoom(node).render('#d3-flame-graph')

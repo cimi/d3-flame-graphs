@@ -119,34 +119,43 @@ d3.flameGraph = ->
         .enter()
           .append('g').attr('class', (d, idx) -> if idx == 0 then 'root node' else 'node')
 
-      nodes.append('rect')
-        .attr('width', (d) => @x(d.dx))
-        .attr('height', (d) => @cellHeight())
-        .attr('x', (d) => @x(d.x))
-        .attr('y', (d) => @y(d.y))
-        .attr('fill', (d) => @color()(d))
-
-      nodes.append('text')
-        .attr('class', 'label')
-        .attr('dy', "#{@fontSize / 2}em")
-        .attr('x', (d) => @x(d.x) + 2)
-        .attr('y', (d) => @y(d.y) + @cellHeight() / 2)
-        .style('font-size', "#{@fontSize}em")
-        .text((d) => @label(d) if d.name and @x(d.dx) > 40)
-      # overlaying a transparent rectangle to capture events
-      # TODO: maybe there's a smarter way to do this?
-      nodes.append('rect')
-        .attr('class', 'overlay')
-        .attr('width', (d) => @x(d.dx))
-        .attr('height', (d) => @cellHeight())
-        .attr('x', (d) => @x(d.x))
-        .attr('y', (d) => @y(d.y))
+      @_renderNodes nodes,
+        x: (d) => @x(d.x)
+        y: (d) => @y(d.y)
+        width: (d) => @x(d.dx)
+        height: (d) => @cellHeight()
+        text: (d) => @label(d) if d.name and @x(d.dx) > 40
 
       console.timeEnd('render')
 
       console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
       @_renderBreadcrumbs()._enableNavigation() if @breadcrumbs()
       @_renderTooltip()                         if @tooltip()
+      @
+
+    _renderNodes: (nodes, attrs) ->
+      nodes.append('rect')
+        .attr('width', attrs.width)
+        .attr('height', @cellHeight())
+        .attr('x', attrs.x)
+        .attr('y', attrs.y)
+        .attr('fill', (d) => @color()(d))
+
+      nodes.append('text')
+        .attr('class', 'label')
+        .attr('dy', "#{@fontSize / 2}em")
+        .attr('x', (d) => attrs.x(d) + 2)
+        .attr('y', (d, idx) => attrs.y(d, idx) + @cellHeight() / 2)
+        .style('font-size', "#{@fontSize}em")
+        .text(attrs.text)
+      # overlaying a transparent rectangle to capture events
+      # TODO: maybe there's a smarter way to do this?
+      nodes.append('rect')
+        .attr('class', 'overlay')
+        .attr('width', attrs.width)
+        .attr('height', @cellHeight())
+        .attr('x', attrs.x)
+        .attr('y', attrs.y)
       @
 
     _renderTooltip: () ->
@@ -184,22 +193,12 @@ d3.flameGraph = ->
         .append('g')
           .attr('class', 'ancestor')
 
-      group.append('rect')
-        .attr('width', @width())
-        .attr('height', @cellHeight())
-        .attr('x', 0)
-        .attr('y', (d, idx) => @height() - ((idx + 1) * @cellHeight()))
-        .attr('fill', (d) => @color()(d))
-
-      group.append('text')
-        .attr('class', 'label')
-        .attr('dy', '#{@fontSize / 2}em')
-        .attr('x', (d) => 2)
-        .attr('y', (d, idx) => @height() - ((idx + 1) * @cellHeight()) + @cellHeight() / 2)
-        .style('font-size', "#{@fontSize}em")
-        .text((d) => "↩ #{getClassAndMethodName(d.name)}")
-
-      breadcrumbs.exit().remove()
+      @_renderNodes group,
+        x: (d) => 0
+        y: (d, idx) => debugger; @height() - ((idx + 1) * @cellHeight())
+        width: @width()
+        height: @cellHeight()
+        text: (d) => "↩ #{getClassAndMethodName(d.name)}"
       @
 
     _enableNavigation: () ->

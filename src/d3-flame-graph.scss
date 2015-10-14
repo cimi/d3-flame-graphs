@@ -1,0 +1,115 @@
+$graphBorderColor: #0E0E0E;
+$graphBackgroundColor: #FFF;
+
+$tooltipBackground: rgba(100, 50, 0, 0.8);
+$tooltipTextColor: #FFF;
+
+$itemBorderColor: #EEE;
+$itemHighlightColor: #FFD700;
+
+.flame-graph {
+
+  border: 1px solid $graphBorderColor;
+  background-color: $graphBackgroundColor;
+
+  .label {
+    font-family: Verdana;
+    font-weight: lighter;
+  }
+
+  .node {
+    cursor: pointer;
+
+    /* root is not clickable */
+    &.root {
+      cursor: auto;
+
+      /* clicking the base node is disabled as it does not make sense to zoom on it */
+      :hover {
+        cursor: auto;
+      }
+    }
+  }
+
+  .ancestor {
+    cursor: pointer;
+    opacity: 0.6;
+  }
+
+  rect {
+    stroke: $itemBorderColor;
+    fill-opacity: .8;
+
+    &.overlay {
+      fill-opacity: 0;
+      stroke-opacity: 0;
+    }
+  }
+ 
+  g {
+    &.highlight, :hover {
+      rect:first-child {
+        fill: $itemHighlightColor;
+        fill-opacity: 1;
+      }
+    }
+  }
+}
+
+.d3-tip {
+
+  line-height: 1;
+  font-family: Verdana;
+  font-size: 12px;
+  padding: 12px;
+  background: $tooltipBackground;
+  color: $tooltipTextColor;
+  border-radius: 7px;
+  pointer-events: none;
+  
+  /* Creates a small triangle extender for the tooltip */
+  &:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    line-height: 1;
+    color: $tooltipBackground;
+    position: absolute;
+    pointer-events: none;
+  }
+
+  /* Northward tooltips */
+  &.n:after {
+    content: "\25BC";
+    margin: -1px 0 0 0;
+    top: 100%;
+    left: 0;
+    text-align: center;
+  }
+
+  /* Eastward tooltips */
+  &.e:after {
+    content: "\25C0";
+    margin: -4px 0 0 0;
+    top: 50%;
+    left: -8px;
+  }
+
+  /* Southward tooltips */
+  &.s:after {
+    content: "\25B2";
+    margin: 0 0 1px 0;
+    top: -8px;
+    left: 0;
+    text-align: center;
+  }
+
+  /* Westward tooltips */
+  &.w:after {
+    content: "\25B6";
+    margin: -4px 0 0 -1px;
+    top: 50%;
+    left: 100%;
+  }
+}

@@ -2,6 +2,7 @@ var gulp = require('gulp');
 var coffee = require('gulp-coffee');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
+var sass = require('gulp-sass');
 var sourcemaps = require('gulp-sourcemaps');
 var browserSync = require('browser-sync');
 var reload = browserSync.reload;
@@ -9,7 +10,7 @@ var del = require('del');
 
 var paths = {
   scripts:        ['src/**/*.coffee'],
-  styles:         ['src/**/*.css'],
+  styles:         ['src/**/*.scss'],
   demoResources:  ['demo/**/*.*', 'dist/**/*.*', '!demo/src/**'],
   demoScripts:    ['demo/src/**/*.coffee'],
   dist:           'dist',
@@ -36,6 +37,7 @@ gulp.task('dist:min', function () {
 });
 gulp.task('dist:styles', function () {
   return gulp.src(paths.styles)
+    .pipe(sass().on('error', sass.logError))
     .pipe(gulp.dest(paths.dist))
 });
 

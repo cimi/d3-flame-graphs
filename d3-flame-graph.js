@@ -33,7 +33,7 @@
     addFillerNodes = function(node) {
       var childSum, children;
       children = node.children;
-      if (!children) {
+      if (!(children != null ? children.length : void 0)) {
         return node;
       }
       if (children.filter(function(child) {

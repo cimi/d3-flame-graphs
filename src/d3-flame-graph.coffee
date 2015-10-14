@@ -23,7 +23,7 @@ d3.flameGraph = ->
   addFillerNodes = (node) ->
     # TODO: if there are no fillers this can be expensive as it's called often
     children = node.children
-    return node if not children
+    return node if not children?.length
     return node if children.filter((child) -> child.filler).length > 0
     childSum = children.reduce ((sum, child) -> sum + child.value), 0
     if childSum < node.value

@@ -92,14 +92,32 @@ Triggers a repaint of the flame graph, using the values previously fed in as par
 
 The selector value is required, it defines the DOM element to which the SVG will be appended. Prior to rendering, any svg elements present in the given container will be cleared.
 
-### Sample invocation:
+### Sample usage:
+
+The example below is taken from the demo source. Although it is written in CoffeeScript, the plugin can be used from vanilla JS without any issues.
 
 ```
+d3.json "data/profile.json", (err, data) ->
+  profile = convert(data.profile)
+  tooltip = (d) -> "#{d.name} <br /><br />
+    #{d.value} samples<br />
+    #{((d.value / profile.value) * 100).toFixed(2)}% of total"
   flameGraph = d3.flameGraph()
     .size([1200, 600])
     .cellHeight(20)
     .data(profile)
     .zoomEnabled(true)
-    .tooltipEnabled(true)
+    .tooltip(tooltip)
     .render('#d3-flame-graph')
+
+  d3.select('#highlight')
+    .on 'click', () ->
+      nodes = flameGraph.select(/java\.util.*/)
+      nodes.classed("highlight", (d, i) -> not d3.select(this).classed("highlight"))
+
+  d3.select('#zoom')
+    .on 'click', () ->
+      # jump to the first java.util.concurrent method we can find
+      node = flameGraph.select(/java\.util\.concurrent.*/, false)[0]
+      flameGraph.zoom(node)
 ```

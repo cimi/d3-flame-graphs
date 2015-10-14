@@ -43,11 +43,6 @@ d3.json "data/profile.json", (err, data) ->
 
   d3.select('#zoom')
     .on 'click', () ->
-      # check to see if the node is not already selected
-      # this can be done more elegantly, this is quick & dirty
-      root = d3.select('.flame-graph g g:first-child text').datum()
-      return if root.name == 'java.util.concurrent.CountDownLatch.await'
-
-      # pick the first java.util.concurrent method, we know it's the one above
+      # jump to the first java.util.concurrent method we can find
       node = flameGraph.select(/java\.util\.concurrent.*/, false)[0]
       flameGraph.zoom(node)

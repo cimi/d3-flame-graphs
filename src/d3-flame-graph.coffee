@@ -21,20 +21,20 @@ d3.flameGraph = ->
     if maxHash > 0 then result / maxHash else result
 
   addFillerNodes = (node) ->
-    # TODO: if there are no fillers this can be expensive as it's called often
     children = node.children
-    return node if not children?.length
-    return node if children.filter((child) -> child.filler).length > 0
+    return node if node.filled or not children?.length
     childSum = children.reduce ((sum, child) -> sum + child.value), 0
     if childSum < node.value
       children.push
         value: node.value - childSum
         filler: true
     children.forEach(addFillerNodes)
+    node.filled = true
     node
 
   # augments each node in the tree with the maximum distance
   # it is from a terminal node
+  # TODO: this should be done in the same pass as the filler addition
   addMaxDepth = (node) ->
     computeDepth = (node) ->
       return 0 if not node # TODO: this should not be needed
@@ -92,6 +92,7 @@ d3.flameGraph = ->
 
     zoom: (node) ->
       throw new Error("Zoom is disabled!") if not @zoomEnabled()
+      @tip.hide()
       if node in @_ancestors
         @_ancestors = @_ancestors.slice(0, @_ancestors.indexOf(node))
       else

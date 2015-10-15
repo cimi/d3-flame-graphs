@@ -66,7 +66,8 @@ d3.flameGraph = ->
         'margin',
         'cellHeight',
         'zoomEnabled',
-        'tooltip'
+        'zoomAction',
+        'tooltip',
         'color'])
       @_ancestors = []
 
@@ -96,6 +97,7 @@ d3.flameGraph = ->
       else
         @_ancestors.push(@data()[0])
       @data(node).render(@_selector)
+      @_zoomAction?(node)
       @
 
     width: () -> @size()[0] - (@margin().left + @margin().right)

@@ -18,7 +18,7 @@ This is a d3.js plugin that renders flame graphs from hierarchical data.
 ## Features
 
 * __Efficient rendering of large profiles__ - large profiles may use up a lot of CPU and memory to render if all samples get represented on the DOM. This plugin only draws samples that would be visible to the user. The performance improvement in the case of very large profiles is in the range of 10x-20x.
-* __Zooming__ - on click, the container re-renders the subgraph associated with the clicked node. The previous roots are rendered at the bottom of the graph and are clickable - you can revert to a previous state.
+* __Zooming__ - on click, the container re-renders the subgraph associated with the clicked node. The previous roots are rendered at the bottom of the graph and are clickable - you can revert to a previous state. An optional callback can be provided if you want to trigger other changes when zooming.
 * __Tooltips__ - when hovering over nodes a tooltip can be displayed. The tooltip's contents are parametrizable.
 * __Filtering__ - nodes can be selected by name using regex. This enables name-based navigation, highlighting or adding other custom behaviour to certain nodes. See the demo for examples.
 
@@ -70,9 +70,15 @@ The data is supposed to have 'filler nodes', due to fact that D3 considers the v
 
 If _enabled_ is truthy, zooming will be enabled - clicking a node or calling the zoom method programatically will re-render the graph with that node as root. The default value is _true_.
 
+<a href="#zoomAction">#</a> flameGraph.__zoomAction__(_function_)
+
+If a _function_ is provided, on every zoom - clicking a node or calling the zoom method programatically - the function will be called after the graph is re-rendered. The function receives a data node as its parameter and its return value is ignored.
+
 <a href="#zoom">#</a> flameGraph.__zoom__(_node_)
 
 If the zoom is enabled, re-renders the graph with the given node as root. The previous roots are drawn at the bottom of the graph, by clicking on it them you can revert back to previous states. Prior to zooming, any svg elements present in the given container will be cleared.
+
+If the zoom is disabled, this method will throw an error.
 
 [See the demo code](https://github.com/cimi/d3-flame-graphs/blob/master/demo/src/demo.coffee#L69) for an example.
 
@@ -107,6 +113,7 @@ d3.json "data/profile.json", (err, data) ->
     .cellHeight(20)
     .data(profile)
     .zoomEnabled(true)
+    .zoomAction((d) -> console.log(d))
     .tooltip(tooltip)
     .render('#d3-flame-graph')
 

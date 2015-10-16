@@ -85,7 +85,9 @@ d3.flameGraph = ->
       data = augment(data)
       console.timeEnd('augment')
       @original = data if not @original
+      console.time('partition')
       @_data = partitionData(data)
+      console.timeEnd('partition')
       @
 
     zoom: (node) ->
@@ -146,7 +148,7 @@ d3.flameGraph = ->
       containers = @container
         .selectAll('.node')
         .data(@data().filter((d) =>
-          @x(d.dx) > 0.1 and @y(d.y) >= 0 and not d.filler))
+          @x(d.dx) > 0.4 and @y(d.y) >= 0 and not d.filler))
         .enter()
           .append('g').attr('class', (d, idx) -> if idx == 0 then 'root node' else 'node')
 
@@ -158,6 +160,7 @@ d3.flameGraph = ->
         text: (d) => @label(d) if d.name and @x(d.dx) > 40
 
       console.timeEnd('render')
+      console.log("Processed #{@data().length} items")
       console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
       @_renderAncestors()._enableNavigation()   if @zoomEnabled()
       @_renderTooltip()                         if @tooltip()
@@ -178,14 +181,6 @@ d3.flameGraph = ->
         .attr('y', (d, idx) => attrs.y(d, idx) + @cellHeight() / 2)
         .style('font-size', "#{@fontSize}em")
         .text(attrs.text)
-      # overlaying a transparent rectangle to capture events
-      # TODO: maybe there's a smarter way to do this?
-      containers.append('rect')
-        .attr('class', 'overlay')
-        .attr('width', attrs.width)
-        .attr('height', @cellHeight())
-        .attr('x', attrs.x)
-        .attr('y', attrs.y)
       @
 
     _renderTooltip: () ->

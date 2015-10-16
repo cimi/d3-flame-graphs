@@ -1,4 +1,4 @@
-d3 = window.d3
+d3 = if this.d3 then this.d3 else require('d3')
 throw new Error("d3.js needs to be loaded") if not d3
 
 d3.flameGraph = ->
@@ -20,34 +20,29 @@ d3.flameGraph = ->
       weight *= 0.7
     if maxHash > 0 then result / maxHash else result
 
-  addFillerNodes = (node) ->
+  # augments each node in the tree with the maximum distance
+  # it is from a terminal node, the list of parents linking
+  # it to the root and filler nodes that balance the representation
+  augment = (node) ->
     children = node.children
-    return node if node.filled or not children?.length
+    # d3.partition adds the reverse (depth), here we store the distance
+    # between a node and its furthest terminal
+    node.level = 1 if not node.level
+    return node if node.augmented
+
+    if not children?.length
+      node.augmented = true
+      return node
+
     childSum = children.reduce ((sum, child) -> sum + child.value), 0
     if childSum < node.value
-      children.push
-        value: node.value - childSum
-        filler: true
-    children.forEach(addFillerNodes)
-    node.filled = true
-    node
+      children.push({ value: node.value - childSum, filler: true })
 
-  # augments each node in the tree with the maximum distance
-  # it is from a terminal node
-  # TODO: this should be done in the same pass as the filler addition
-  addMaxDepth = (node) ->
-    computeDepth = (node) ->
-      return 0 if not node # TODO: this should not be needed
-      return 1 if not node.children
-      return node.maxDepth if node.maxDepth
+    children.forEach(augment)
 
-      max = node.children
-        .map(computeDepth)
-        .reduce ((max, depth) -> if depth > max then depth else max), 0
-
-      node.maxDepth = max + 1
-      return node.maxDepth
-    computeDepth(node)
+    node.level += children.map((child) -> child.level)
+        .reduce(((max, level) -> if level > max then return level else return max), 0)
+    node.augmented = true
     node
 
   partitionData = (data) ->
@@ -86,8 +81,13 @@ d3.flameGraph = ->
 
     data: (data) ->
       return @_data if not data
+      console.time('augment')
+      data = augment(data)
+      console.timeEnd('augment')
       @original = data if not @original
-      @_data = partitionData(addMaxDepth(addFillerNodes(data)))
+      console.time('partition')
+      @_data = partitionData(data)
+      console.timeEnd('partition')
       @
 
     zoom: (node) ->
@@ -134,8 +134,7 @@ d3.flameGraph = ->
           .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
 
       @maxCells = Math.floor(@height() / @cellHeight())
-      @maxDepth = @data()[0].maxDepth
-
+      @maxDepth = @data()[0].level
       @fontSize = (@cellHeight() / 10) * 0.4
 
       @x = d3.scale.linear()
@@ -149,7 +148,7 @@ d3.flameGraph = ->
       containers = @container
         .selectAll('.node')
         .data(@data().filter((d) =>
-          @x(d.dx) > 0.1 and @y(d.y) >= 0 and not d.filler))
+          @x(d.dx) > 0.4 and @y(d.y) >= 0 and not d.filler))
         .enter()
           .append('g').attr('class', (d, idx) -> if idx == 0 then 'root node' else 'node')
 
@@ -161,6 +160,7 @@ d3.flameGraph = ->
         text: (d) => @label(d) if d.name and @x(d.dx) > 40
 
       console.timeEnd('render')
+      console.log("Processed #{@data().length} items")
       console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
       @_renderAncestors()._enableNavigation()   if @zoomEnabled()
       @_renderTooltip()                         if @tooltip()
@@ -181,14 +181,6 @@ d3.flameGraph = ->
         .attr('y', (d, idx) => attrs.y(d, idx) + @cellHeight() / 2)
         .style('font-size', "#{@fontSize}em")
         .text(attrs.text)
-      # overlaying a transparent rectangle to capture events
-      # TODO: maybe there's a smarter way to do this?
-      containers.append('rect')
-        .attr('class', 'overlay')
-        .attr('width', attrs.width)
-        .attr('height', @cellHeight())
-        .attr('x', attrs.x)
-        .attr('y', attrs.y)
       @
 
     _renderTooltip: () ->

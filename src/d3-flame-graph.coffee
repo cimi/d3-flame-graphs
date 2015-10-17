@@ -59,7 +59,7 @@ d3.flameGraphUtils =
 
     nodes.forEach (node) ->
       processParents(node)
-      node.value = 0
+      node.value = if unhide then node.originalValue else 0
       processChildren(node)
 
 d3.flameGraph = ->

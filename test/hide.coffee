@@ -11,7 +11,7 @@ chai.use(require('chai-things'))
 require('../src/d3-flame-graph')
 
 describe 'd3.flameGraph.hide', ->
-  original = require('data/profile-test.json')
+  original = require('./data/profile-test.json')
   data = undefined
   describe 'when hiding nodes', ->
     beforeEach (done) ->
@@ -48,3 +48,16 @@ describe 'd3.flameGraph.hide', ->
       expect(data.children[1]).to.have.property('hidden').to.have.members([40])
 
   describe 'when unhiding nodes', ->
+    beforeEach (done) ->
+      # deep copy because of require caching
+      data = JSON.parse(JSON.stringify(original))
+      data = d3.flameGraphUtils.augment(data)
+      d3.flameGraphUtils.partition(data)
+      done()
+
+    it 'should reset target nodes to their original values', ->
+      target = [data.children[1].children[0]]
+      d3.flameGraphUtils.hide(target)
+      d3.flameGraphUtils.hide(target, true)
+      expect(target[0]).to.have.property('value', 40)
+      expect(target[0]).to.have.property('originalValue', 40)

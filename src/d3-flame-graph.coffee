@@ -12,6 +12,7 @@ d3.flameGraphUtils =
     return node if node.augmented
     node.originalValue = node.value
     node.level = if node.children then 1 else 0
+    node.hidden = []
     if not children?.length
       node.augmented = true
       return node
@@ -53,13 +54,13 @@ d3.flameGraphUtils =
           node.parent.value += initialValue
         else
           node.parent.value = Math.max(node.parent.value - initialValue, 0)
+          node.parent.hidden.push(initialValue)
         node = node.parent
 
     nodes.forEach (node) ->
       processParents(node)
       node.value = 0
       processChildren(node)
-
 
 d3.flameGraph = ->
 

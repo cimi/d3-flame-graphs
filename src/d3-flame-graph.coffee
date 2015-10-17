@@ -36,21 +36,33 @@ d3.flameGraphUtils =
       .nodes(data)
 
   hide: (nodes, unhide = false) ->
+    previouslyHidden = (node) -> node.hidden.reduce ((acc, val) -> acc + val), 0
+    remove = (arr, val) ->
+      # we need to remove precisely one occurrence of initial value
+      pos = arr.indexOf(val)
+      arr.splice(pos, 1) if pos >= 0
     processChildren = (node) ->
       return if not node.children
       node.children.forEach (child) ->
         if unhide
-          # FIXME: this is buggy if there are hidden children
-          # TODO: keep an array of hidden values and compute off that
-          child.value = child.originalValue
+          child.value = child.originalValue - previouslyHidden(child)
         else
           child.value = 0
         processChildren(child)
 
+    processItself = (node) ->
+      if unhide
+        remove(node.hidden, node.originalValue)
+        node.value = node.originalValue - previouslyHidden(node)
+      else
+        node.hidden.push(node.originalValue)
+        node.value = 0
+
     processParents = (node) ->
-      initialValue = node.value
+      initialValue = node.originalValue
       while node.parent
         if unhide
+          remove(node.parent.hidden, initialValue)
           node.parent.value += initialValue
         else
           node.parent.value = Math.max(node.parent.value - initialValue, 0)
@@ -59,7 +71,7 @@ d3.flameGraphUtils =
 
     nodes.forEach (node) ->
       processParents(node)
-      node.value = if unhide then node.originalValue else 0
+      processItself(node)
       processChildren(node)
 
 d3.flameGraph = ->

@@ -22,7 +22,7 @@ convert = (rawData) ->
       node.children.push(subTree)
   node
 
-d3.json "data/profile-huge.json", (err, data) ->
+d3.json "data/profile.json", (err, data) ->
   profile = convert(data.profile)
   tooltip = (d) -> "#{d.name} <br /><br />
     #{d.value} samples<br />
@@ -46,3 +46,7 @@ d3.json "data/profile-huge.json", (err, data) ->
       # jump to the first java.util.concurrent method we can find
       node = flameGraph.select(((d) -> /java\.util\.concurrent.*/.test(d.name)), false)[0]
       flameGraph.zoom(node)
+
+  d3.select('#hide')
+    .on 'click', () ->
+      flameGraph.hide((d) -> /Unsafe\.park$/.test(d.name))

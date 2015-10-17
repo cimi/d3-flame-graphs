@@ -101,6 +101,35 @@ d3.flameGraph = ->
       @_zoomAction?(node)
       @
 
+    hide: (predicate, unhide = false) ->
+      matches = @select(predicate, false)
+      processChildren = (node) ->
+        return if not node.children
+        node.children.forEach (child) ->
+          if unhide
+            # FIXME: this is buggy if there are hidden children
+            # TODO: keep an array of hidden values and compute off that
+            child.value = child.originalValue
+          else
+            child.value = 0
+          processChildren(child)
+
+      processParents = (node) ->
+        while node.parent
+          if unhide
+            node.parent.value += node.value
+          else
+            node.parent.value = Math.max(node.parent.value - node.value, 0)
+          node = node.parent
+
+      matches.forEach (node) ->
+        processParents(node)
+        node.value = 0
+        processChildren(node)
+
+      console.log(@data())
+      @render(@_selector)
+
     width: () -> @size()[0] - (@margin().left + @margin().right)
 
     height: () -> @size()[1] - (@margin().top + @margin().bottom)

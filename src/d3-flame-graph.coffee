@@ -1,6 +1,31 @@
 d3 = if this.d3 then this.d3 else require('d3')
 throw new Error("d3.js needs to be loaded") if not d3
 
+d3.flameGraphUtils =
+  # augments each node in the tree with the maximum distance
+  # it is from a terminal node, the list of parents linking
+  # it to the root and filler nodes that balance the representation
+  augment: (node) ->
+    children = node.children
+    # d3.partition adds the reverse (depth), here we store the distance
+    # between a node and its furthest leaf
+    return node if node.augmented
+    node.originalValue = node.value
+    node.level = if node.children then 1 else 0
+    if not children?.length
+      node.augmented = true
+      return node
+
+    childSum = children.reduce ((sum, child) -> sum + child.value), 0
+    if childSum < node.value
+      children.push({ value: node.value - childSum, filler: true })
+
+    children.forEach(d3.flameGraphUtils.augment)
+
+    node.level += children.reduce ((max, child) -> Math.max(child.level, max)), 0
+    node.augmented = true
+    node
+
 d3.flameGraph = ->
 
   getClassAndMethodName = (fqdn) ->
@@ -19,31 +44,6 @@ d3.flameGraph = ->
       maxHash += weight * (mod - 1)
       weight *= 0.7
     if maxHash > 0 then result / maxHash else result
-
-  # augments each node in the tree with the maximum distance
-  # it is from a terminal node, the list of parents linking
-  # it to the root and filler nodes that balance the representation
-  augment = (node) ->
-    children = node.children
-    # d3.partition adds the reverse (depth), here we store the distance
-    # between a node and its furthest leaf
-    return node if node.augmented
-    node.originalValue = node.value
-    node.level = if node.children then 1 else 0
-    if not children?.length
-      node.augmented = true
-      return node
-
-    childSum = children.reduce ((sum, child) -> sum + child.value), 0
-    if childSum < node.value
-      children.push({ value: node.value - childSum, filler: true })
-
-    children.forEach(augment)
-
-    node.level += children.reduce(((max, child) -> if child.level > max then child.level else max), 0)
-
-    node.augmented = true
-    node
 
   partitionData = (data) ->
     d3.layout
@@ -82,7 +82,7 @@ d3.flameGraph = ->
     data: (data) ->
       return @_data if not data
       console.time('augment')
-      data = augment(data)
+      data = d3.flameGraphUtils.augment(data)
       console.timeEnd('augment')
       @original = data if not @original
       console.time('partition')

@@ -110,12 +110,12 @@ d3.flameGraph = ->
       label = getClassAndMethodName(d.name)
       label.substr(0, Math.round(@x(d.dx) / (@cellHeight() / 10 * 4)))
 
-    select: (regex, onlyVisible = true) ->
+    select: (predicate, onlyVisible = true) ->
       if onlyVisible
-        return @container.selectAll('.node').filter((d) -> regex.test(d.name))
+        return @container.selectAll('.node').filter(predicate)
       else
         # re-partition original and filter that
-        result = partitionData(@original).filter((d) -> regex.test(d.name))
+        result = partitionData(@original).filter(predicate)
         return result
 
     render: (selector) ->

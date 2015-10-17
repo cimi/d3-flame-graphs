@@ -20,10 +20,9 @@ convert = (rawData) ->
     subTree = convert(child)
     if subTree
       node.children.push(subTree)
-
   node
 
-d3.json "data/profile.json", (err, data) ->
+d3.json "data/profile-huge.json", (err, data) ->
   profile = convert(data.profile)
   tooltip = (d) -> "#{d.name} <br /><br />
     #{d.value} samples<br />
@@ -39,11 +38,11 @@ d3.json "data/profile.json", (err, data) ->
 
   d3.select('#highlight')
     .on 'click', () ->
-      nodes = flameGraph.select(/java\.util.*/)
+      nodes = flameGraph.select((d) -> /java\.util.*/.test(d.name))
       nodes.classed("highlight", (d, i) -> not d3.select(this).classed("highlight"))
 
   d3.select('#zoom')
     .on 'click', () ->
       # jump to the first java.util.concurrent method we can find
-      node = flameGraph.select(/java\.util\.concurrent.*/, false)[0]
+      node = flameGraph.select(((d) -> /java\.util\.concurrent.*/.test(d.name)), false)[0]
       flameGraph.zoom(node)

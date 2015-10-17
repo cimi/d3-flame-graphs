@@ -1,0 +1,39 @@
+{
+  "name": "ALL",
+  "value": 100,
+  "children": [
+  {
+    "name": "C1",
+    "value": 30,
+    "children": [
+    {
+      "name": "C11",
+      "value": 10,
+      "children": []
+    },
+    {
+      "name": "C12",
+      "value": 3,
+      "children": []
+    }
+    ]
+  },
+  {
+    "name": "C2",
+    "value": 60,
+    "children": [
+    {
+      "name": "C21",
+      "value": 40,
+      "children": [
+      {
+        "name": "C211",
+        "value": 20,
+        "children": []
+      }
+      ]
+    }
+    ]
+  }
+  ]
+}

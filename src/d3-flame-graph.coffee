@@ -26,6 +26,32 @@ d3.flameGraphUtils =
     node.augmented = true
     node
 
+  hide: (nodes, unhide = false) ->
+    processChildren = (node) ->
+      return if not node.children
+      node.children.forEach (child) ->
+        if unhide
+          # FIXME: this is buggy if there are hidden children
+          # TODO: keep an array of hidden values and compute off that
+          child.value = child.originalValue
+        else
+          child.value = 0
+        processChildren(child)
+
+    processParents = (node) ->
+      while node.parent
+        if unhide
+          node.parent.value += node.value
+        else
+          node.parent.value = Math.max(node.parent.value - node.value, 0)
+        node = node.parent
+
+    nodes.forEach (node) ->
+      processParents(node)
+      node.value = 0
+      processChildren(node)
+
+
 d3.flameGraph = ->
 
   getClassAndMethodName = (fqdn) ->
@@ -90,6 +116,11 @@ d3.flameGraph = ->
       console.timeEnd('partition')
       @
 
+    hide: (predicate, unhide = false) ->
+      matches = @select(predicate, false)
+      d3.flameGraphUtils.hide(matches)
+      @render(@_selector)
+
     zoom: (node) ->
       throw new Error("Zoom is disabled!") if not @zoomEnabled()
       @tip.hide()
@@ -100,35 +131,6 @@ d3.flameGraph = ->
       @data(node).render(@_selector)
       @_zoomAction?(node)
       @
-
-    hide: (predicate, unhide = false) ->
-      matches = @select(predicate, false)
-      processChildren = (node) ->
-        return if not node.children
-        node.children.forEach (child) ->
-          if unhide
-            # FIXME: this is buggy if there are hidden children
-            # TODO: keep an array of hidden values and compute off that
-            child.value = child.originalValue
-          else
-            child.value = 0
-          processChildren(child)
-
-      processParents = (node) ->
-        while node.parent
-          if unhide
-            node.parent.value += node.value
-          else
-            node.parent.value = Math.max(node.parent.value - node.value, 0)
-          node = node.parent
-
-      matches.forEach (node) ->
-        processParents(node)
-        node.value = 0
-        processChildren(node)
-
-      console.log(@data())
-      @render(@_selector)
 
     width: () -> @size()[0] - (@margin().left + @margin().right)
 

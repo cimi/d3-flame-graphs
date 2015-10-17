@@ -10,12 +10,7 @@ chai.use(require('chai-things'))
 # as it augments the existing d3 object
 require('../src/d3-flame-graph')
 
-# shut up the timer, does not make sense here
-console.time = ->
-console.timeEnd = ->
-
 describe 'd3.flameGraph.augment', ->
-  flameGraph = undefined
   root = undefined
   describe 'when provided with a simple tree', ->
     beforeEach (done) ->

@@ -26,6 +26,14 @@ d3.flameGraphUtils =
     node.augmented = true
     node
 
+  partition: (data) ->
+    d3.layout.partition()
+      .sort (a,b) ->
+        return  1 if a.filler # move fillers to the right
+        return -1 if b.filler # move fillers to the right
+        a.name.localeCompare(b.name)
+      .nodes(data)
+
   hide: (nodes, unhide = false) ->
     processChildren = (node) ->
       return if not node.children
@@ -39,11 +47,12 @@ d3.flameGraphUtils =
         processChildren(child)
 
     processParents = (node) ->
+      initialValue = node.value
       while node.parent
         if unhide
-          node.parent.value += node.value
+          node.parent.value += initialValue
         else
-          node.parent.value = Math.max(node.parent.value - node.value, 0)
+          node.parent.value = Math.max(node.parent.value - initialValue, 0)
         node = node.parent
 
     nodes.forEach (node) ->
@@ -70,15 +79,6 @@ d3.flameGraph = ->
       maxHash += weight * (mod - 1)
       weight *= 0.7
     if maxHash > 0 then result / maxHash else result
-
-  partitionData = (data) ->
-    d3.layout
-      .partition()
-      .sort((a,b) ->
-        return 1  if a.filler # move fillers to the right
-        return -1 if b.filler # move fillers to the right
-        a.name.localeCompare(b.name))
-      .nodes(data)
 
   class FlameGraph
     constructor: () ->
@@ -112,7 +112,7 @@ d3.flameGraph = ->
       console.timeEnd('augment')
       @original = data if not @original
       console.time('partition')
-      @_data = partitionData(data)
+      @_data = d3.flameGraphUtils.partition(data)
       console.timeEnd('partition')
       @
 
@@ -146,7 +146,7 @@ d3.flameGraph = ->
         return @container.selectAll('.node').filter(predicate)
       else
         # re-partition original and filter that
-        result = partitionData(@original).filter(predicate)
+        result = d3.flameGraphUtils.partition(@original).filter(predicate)
         return result
 
     render: (selector) ->

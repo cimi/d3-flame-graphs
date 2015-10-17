@@ -38,8 +38,8 @@ describe 'augment nodes', ->
       expect(filler).has.property('value', 15)
 
     it 'augments them with their level', ->
-      expect(root).has.property('level', 2)
-      expect(root.children).to.all.have.property('level', 1)
+      expect(root).has.property('level', 1)
+      expect(root.children).to.all.have.property('level', 0)
 
     it 'augments them with their parents', ->
 
@@ -56,13 +56,13 @@ describe 'augment nodes', ->
       done()
 
     it 'augments the root with the correct level', ->
-      expect(root).has.property('level', 3)
+      expect(root).has.property('level', 2)
 
     it 'augments the children with the correct level', ->
-      expect(root.children).to.include.an.item.that.has.property('level', 2)
       expect(root.children).to.include.an.item.that.has.property('level', 1)
+      expect(root.children).to.include.an.item.that.has.property('level', 0)
 
     it 'augments the grandchildren with the correct level', ->
       grandchildren = root.children[0].children
-      expect(grandchildren).to.all.have.property('level', 1)
+      expect(grandchildren).to.all.have.property('level', 0)
 

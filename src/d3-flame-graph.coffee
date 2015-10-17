@@ -26,10 +26,10 @@ d3.flameGraph = ->
   augment = (node) ->
     children = node.children
     # d3.partition adds the reverse (depth), here we store the distance
-    # between a node and its furthest terminal
-    node.level = 1 if not node.level
+    # between a node and its furthest leaf
     return node if node.augmented
 
+    node.level = if node.children then 1 else 0
     if not children?.length
       node.augmented = true
       return node
@@ -40,8 +40,8 @@ d3.flameGraph = ->
 
     children.forEach(augment)
 
-    node.level += children.map((child) -> child.level)
-        .reduce(((max, level) -> if level > max then return level else return max), 0)
+    node.level += children.reduce(((max, child) -> if child.level > max then child.level else max), 0)
+
     node.augmented = true
     node
 
@@ -133,17 +133,18 @@ d3.flameGraph = ->
         .append('g')
           .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
 
-      @maxCells = Math.floor(@height() / @cellHeight())
-      @maxDepth = @data()[0].level
       @fontSize = (@cellHeight() / 10) * 0.4
 
       @x = d3.scale.linear()
         .domain([0, d3.max(@data(), (d) -> d.x + d.dx)])
         .range([0, @width()])
+
+      visibleCells = Math.floor(@height() / @cellHeight())
+      maxLevels = @data()[0].level
       @y = d3.scale.quantize()
         .domain([d3.max(@data(), (d) -> d.y), 0])
-        .range(d3.range(@maxDepth)
-          .map((cell) =>  (cell - @maxDepth + @maxCells - @_ancestors.length) * @cellHeight()))
+        .range(d3.range(maxLevels)
+          .map((cell) =>  ((cell + visibleCells) - (@_ancestors.length + maxLevels)) * @cellHeight()))
 
       containers = @container
         .selectAll('.node')

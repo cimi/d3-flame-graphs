@@ -41,9 +41,9 @@ describe 'augment nodes', ->
       expect(root).has.property('level', 1)
       expect(root.children).to.all.have.property('level', 0)
 
-    it 'augments them with their parents', ->
-
     it 'saves the original value in a separate field', ->
+      expect(root).has.property('originalValue', 45)
+      expect(root.children).to.all.have.property('originalValue')
 
   describe 'when provided with a multilevel tree', ->
     beforeEach (done) ->

@@ -28,7 +28,7 @@ d3.flameGraph = ->
     # d3.partition adds the reverse (depth), here we store the distance
     # between a node and its furthest leaf
     return node if node.augmented
-
+    node.originalValue = node.value
     node.level = if node.children then 1 else 0
     if not children?.length
       node.augmented = true

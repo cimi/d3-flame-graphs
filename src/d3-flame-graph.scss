@@ -45,7 +45,7 @@ $itemHighlightColor: #FFD700;
       stroke-opacity: 0;
     }
   }
- 
+
   g {
     &.highlight, :hover {
       rect:first-child {
@@ -66,7 +66,7 @@ $itemHighlightColor: #FFD700;
   color: $tooltipTextColor;
   border-radius: 7px;
   pointer-events: none;
-  
+
   /* Creates a small triangle extender for the tooltip */
   &:after {
     box-sizing: border-box;

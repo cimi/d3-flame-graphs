@@ -16,7 +16,7 @@ describe 'd3.flameGraph.augment', ->
     beforeEach (done) ->
       data = { value: 45, name:"root", children: [] }
       data.children.push({name: "c1", value: 10}, {name: "c2", value: 20})
-      root = d3.flameGraphUtils.augment(data)
+      root = d3.flameGraphUtils.augment(data, '0')
       done()
 
     it 'should mark the root as augmented', ->
@@ -39,13 +39,18 @@ describe 'd3.flameGraph.augment', ->
       expect(root).has.property('originalValue', 45)
       expect(root.children).to.all.have.property('originalValue')
 
+    it 'should add location info to all nodes', ->
+      expect(root).has.property('location', '0')
+      expect(root.children[0]).to.have.property('location')
+      expect(root.children[1]).to.have.property('location')
+
   describe 'when provided with a multilevel tree', ->
     beforeEach (done) ->
       data = { value: 45, name:"root", children: [] }
       firstChild = {name: "c11", value: 10, children: [{name: "c21", value: 1}]}
       secondChild = {name: "c12", value: 20}
       data.children.push(firstChild, secondChild)
-      root = d3.flameGraphUtils.augment(data)
+      root = d3.flameGraphUtils.augment(data, 0)
       done()
 
     it 'augments the root with the correct level', ->

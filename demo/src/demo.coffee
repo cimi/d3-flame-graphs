@@ -1,5 +1,6 @@
 # function that converts from a particular data format into the generic one
 # expected by the plugin
+window.debugging = true
 convert = (rawData) ->
   value = 0
   for state in ['RUNNABLE', 'BLOCKED', 'TIMED_WAITING', 'WAITING']
@@ -22,8 +23,8 @@ convert = (rawData) ->
       node.children.push(subTree)
   node
 
-d3.json "data/profile.json", (err, data) ->
-  profile = convert(data.profile)
+d3.json "data/profile-test.json", (err, data) ->
+  profile = data # convert(data.profile)
   tooltip = (d) -> "#{d.name} <br /><br />
     #{d.value} samples<br />
     #{((d.value / profile.value) * 100).toFixed(2)}% of total"

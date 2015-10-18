@@ -1,7 +1,10 @@
 d3 = if @d3 then @d3 else require('d3')
 throw new Error("d3.js needs to be loaded") if not d3
 
-console = { log: (->), time: (->), timeEnd: (->) } if not @debugging
+# if window.debugging
+#   console = window.console
+# else
+#   console = { log: (->), time: (->), timeEnd: (->) }
 
 d3.flameGraphUtils =
   # augments each node in the tree with the maximum distance
@@ -69,6 +72,7 @@ d3.flameGraphUtils =
 d3.flameGraph = (selector) ->
 
   getClassAndMethodName = (fqdn) ->
+    return "" if not fqdn
     tokens = fqdn.split(".")
     tokens.slice(tokens.length - 2).join(".")
 
@@ -231,7 +235,6 @@ d3.flameGraph = (selector) ->
           .attr('x', attrs.x)
           .attr('y', attrs.y)
 
-
       targetLabels = containers.selectAll('text') if not enter
       targetLabels = containers.append('text') if enter
       containers.selectAll('text')
@@ -268,25 +271,43 @@ d3.flameGraph = (selector) ->
       @
 
     _renderAncestors: () ->
+      if not @_ancestors.length
+        ancestors = @container.selectAll('.ancestor').remove()
+        return @
+
+      # FIXME: this is pretty ugly, but we need to add links between ancestors
       ancestorData = @_ancestors.map((ancestor, idx) ->
-        { name: ancestor.name, value: idx })
-      ancestors = @container
-        .selectAll('.ancestor')
-        .data(ancestorData)
+        { name: ancestor.name, value: idx + 1, location: ancestor.location })
+      for ancestor, idx in ancestorData
+        prev = ancestorData[idx - 1]
+        prev.children = [ancestor] if prev
 
-      containers = ancestors
-        .enter()
-        .append('g')
-          .attr('class', 'ancestor')
-
-      @_renderNodes containers,
+      renderAncestor =
         x: (d) => 0
-        y: (d, idx) => @height() - ((idx + 1) * @cellHeight())
+        y: (d) => console.log(d); return @height() - (d.value * @cellHeight())
         width: @width()
         height: @cellHeight()
         text: (d) => "↩ #{getClassAndMethodName(d.name)}"
-      , true
 
+      # JOIN
+      console.log('this!', d3.layout.partition().nodes(ancestorData[0]))
+      ancestors = @container
+        .selectAll('.ancestor')
+        .data(d3.layout.partition().nodes(ancestorData[0]), (d) -> d.location)
+      # UPDATE
+      console.log('update', ancestors.data().map((d) -> d.name))
+      @_renderNodes ancestors, renderAncestor
+
+      # ENTER
+      newAncestors = ancestors
+        .enter()
+        .append('g')
+          .attr('class', 'ancestor')
+      console.log('enter', newAncestors.data().map((d) -> d.name))
+      @_renderNodes newAncestors, renderAncestor, true
+
+      # EXIT
+      console.log('exit', ancestors.exit().data().map((d) -> d.name))
       ancestors.exit().remove()
       @
 

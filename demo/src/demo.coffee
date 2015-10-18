@@ -23,15 +23,14 @@ convert = (rawData) ->
       node.children.push(subTree)
   node
 
-d3.json "data/profile-test.json", (err, data) ->
-  profile = data # convert(data.profile)
+d3.json "data/profile.json", (err, data) ->
+  profile = convert(data.profile)
   tooltip = (d) -> "#{d.name} <br /><br />
     #{d.value} samples<br />
     #{((d.value / profile.value) * 100).toFixed(2)}% of total"
-  flameGraph = d3.flameGraph('#d3-flame-graph')
+  flameGraph = d3.flameGraph('#d3-flame-graph', profile)
     .size([1200, 600])
     .cellHeight(20)
-    .data(profile)
     .zoomEnabled(true)
     # .zoomAction((d) -> console.log(d))
     .tooltip(tooltip)

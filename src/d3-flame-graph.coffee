@@ -63,7 +63,7 @@ d3.flameGraphUtils =
       process(node, val)
       processChildren(node, val)
 
-d3.flameGraph = ->
+d3.flameGraph = (selector) ->
 
   getClassAndMethodName = (fqdn) ->
     tokens = fqdn.split(".")
@@ -83,7 +83,8 @@ d3.flameGraph = ->
     if maxHash > 0 then result / maxHash else result
 
   class FlameGraph
-    constructor: () ->
+    constructor: (selector) ->
+      @_selector = selector
       @_generateAccessors([
         'size',
         'margin',
@@ -125,7 +126,7 @@ d3.flameGraph = ->
       d3.flameGraphUtils.hide(matches, unhide)
       # re-partition the data prior to rendering
       d3.flameGraphUtils.partition(@original)
-      @render(@_selector)
+      @render()
 
     zoom: (node) ->
       throw new Error("Zoom is disabled!") if not @zoomEnabled()
@@ -134,7 +135,7 @@ d3.flameGraph = ->
         @_ancestors = @_ancestors.slice(0, @_ancestors.indexOf(node))
       else
         @_ancestors.push(@data()[0])
-      @data(node).render(@_selector)
+      @data(node).render()
       @_zoomAction?(node)
       @
 
@@ -155,13 +156,11 @@ d3.flameGraph = ->
         result = d3.flameGraphUtils.partition(@original).filter(predicate)
         return result
 
-    render: (selector) ->
-      if not (@_selector or selector)
-        throw new Error("The container's selector needs to be provided before rendering")
+    render: () ->
+      throw new Error("No DOM element provided") if not @_selector
       console.time('render')
-      # refresh container
-      @_selector = selector if selector
-      d3.select(selector).select('svg').remove()
+
+
       @container = d3.select(selector)
         .append('svg')
           .attr('class', 'flame-graph')
@@ -187,7 +186,8 @@ d3.flameGraph = ->
         .selectAll('.node')
         .data(@data().filter((d) =>
           @x(d.dx) > 0.4 and @y(d.y) >= 0 and not d.filler))
-        .enter()
+
+      containers.enter()
           .append('g').attr('class', (d, idx) -> if idx == 0 then 'root node' else 'node')
 
       @_renderNodes containers,
@@ -196,6 +196,8 @@ d3.flameGraph = ->
         width: (d) => @x(d.dx)
         height: (d) => @cellHeight()
         text: (d) => @label(d) if d.name and @x(d.dx) > 40
+
+      containers.exit().remove()
 
       console.timeEnd('render')
       console.log("Processed #{@data().length} items")
@@ -285,4 +287,4 @@ d3.flameGraph = ->
             @["_#{accessor}"] = newValue
             return @
 
-  return new FlameGraph()
+  return new FlameGraph(selector)

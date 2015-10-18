@@ -27,14 +27,14 @@ d3.json "data/profile.json", (err, data) ->
   tooltip = (d) -> "#{d.name} <br /><br />
     #{d.value} samples<br />
     #{((d.value / profile.value) * 100).toFixed(2)}% of total"
-  flameGraph = d3.flameGraph()
+  flameGraph = d3.flameGraph('#d3-flame-graph')
     .size([1200, 600])
     .cellHeight(20)
     .data(profile)
     .zoomEnabled(true)
     .zoomAction((d) -> console.log(d))
     .tooltip(tooltip)
-    .render('#d3-flame-graph')
+    .render()
 
   d3.select('#highlight')
     .on 'click', () ->

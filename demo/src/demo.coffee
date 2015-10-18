@@ -1,30 +1,38 @@
 # function that converts from a particular data format into the generic one
 # expected by the plugin
 window.debugging = true
-convert = (rawData) ->
-  value = 0
-  for state in ['RUNNABLE', 'BLOCKED', 'TIMED_WAITING', 'WAITING']
-    value += rawData.c[state] if not isNaN(rawData.c[state])
 
-  timeElapsed = new Date()
-  timeElapsed.setSeconds(value)
-  timeFormat = countdown.DAYS | countdown.HOURS | countdown.MINUTES | countdown.SECONDS
+runnableVals = []
+convert = (rawData, valueFunc) ->
+
+  # timeElapsed = new Date()
+  # timeElapsed.setSeconds(value)
+  # timeFormat = countdown.DAYS | countdown.HOURS | countdown.MINUTES | countdown.SECONDS
+  runnableVals.push(rawData.c['RUNNABLE']) if rawData.c['RUNNABLE']
   node =
     name: rawData.n,
-    value: value,
-    time: countdown(new Date(), timeElapsed, timeFormat)
+    value: valueFunc(rawData),
+    # time: countdown(new Date(), timeElapsed, timeFormat)
     children: []
 
   # the a field is the list of children
   return node if not rawData.a
   for child in rawData.a
-    subTree = convert(child)
+    subTree = convert(child, valueFunc)
     if subTree
       node.children.push(subTree)
   node
 
 d3.json "data/profile.json", (err, data) ->
-  profile = convert(data.profile)
+  allStates = (node) ->
+    value = 0
+    for state in ['RUNNABLE', 'BLOCKED', 'TIMED_WAITING', 'WAITING']
+      value += node.c[state] if not isNaN(node.c[state])
+    value
+
+
+  profile = convert(data.profile, allStates)
+  console.log(runnableVals.sort((a, b) -> a - b))
   tooltip = (d) -> "#{d.name} <br /><br />
     #{d.value} samples<br />
     #{((d.value / profile.value) * 100).toFixed(2)}% of total"
@@ -44,12 +52,23 @@ d3.json "data/profile.json", (err, data) ->
   d3.select('#zoom')
     .on 'click', () ->
       # jump to the first java.util.concurrent method we can find
-      node = flameGraph.select(((d) -> /java\.util\.concurrent.*/.test(d.name)), false)[0]
+      node = flameGraph.select(((d) -> /CountDownLatch\.await$/.test(d.name)), false)[0]
       flameGraph.zoom(node)
 
   # hacky way of implementing toggle behaviour, can't be bothered right now
   unhide = false
   d3.select('#hide')
     .on 'click', () ->
-      flameGraph.hide ((d) -> /Unsafe\.park$/.test(d.name) or /Object\.wait/.test(d.name)), unhide
+      flameGraph.hide ((d) -> /Unsafe\.park$/.test(d.name) or /Object\.wait$/.test(d.name)), unhide
       unhide = !unhide
+
+  d3.select('#runnable')
+    .on 'click', () ->
+      profile = convert(data.profile, ((node) -> if node.c['RUNNABLE'] then node.c['RUNNABLE'] else 0))
+      flameGraph = d3.flameGraph('#d3-flame-graph', profile)
+        .size([1200, 600])
+        .cellHeight(20)
+        .zoomEnabled(true)
+        # .zoomAction((d) -> console.log(d))
+        .tooltip(tooltip)
+        .render()

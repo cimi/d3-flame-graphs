@@ -32,7 +32,7 @@ d3.json "data/profile.json", (err, data) ->
     .cellHeight(20)
     .data(profile)
     .zoomEnabled(true)
-    .zoomAction((d) -> console.log(d))
+    # .zoomAction((d) -> console.log(d))
     .tooltip(tooltip)
     .render()
 

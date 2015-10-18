@@ -1,11 +1,13 @@
-d3 = if this.d3 then this.d3 else require('d3')
+d3 = if @d3 then @d3 else require('d3')
 throw new Error("d3.js needs to be loaded") if not d3
+
+console = { log: (->), time: (->), timeEnd: (->) } if not @debugging
 
 d3.flameGraphUtils =
   # augments each node in the tree with the maximum distance
   # it is from a terminal node, the list of parents linking
   # it to the root and filler nodes that balance the representation
-  augment: (node) ->
+  augment: (node, location) ->
     children = node.children
     # d3.partition adds the reverse (depth), here we store the distance
     # between a node and its furthest leaf
@@ -13,6 +15,7 @@ d3.flameGraphUtils =
     node.originalValue = node.value
     node.level = if node.children then 1 else 0
     node.hidden = []
+    node.location = location
     if not children?.length
       node.augmented = true
       return node
@@ -21,7 +24,7 @@ d3.flameGraphUtils =
     if childSum < node.value
       children.push({ value: node.value - childSum, filler: true })
 
-    children.forEach(d3.flameGraphUtils.augment)
+    children.forEach((child, idx) -> d3.flameGraphUtils.augment(child, "#{location}#{idx}"))
 
     node.level += children.reduce ((max, child) -> Math.max(child.level, max)), 0
     node.augmented = true
@@ -96,7 +99,7 @@ d3.flameGraph = (selector) ->
       @_ancestors = []
 
       # defaults
-      @_size        = [1200, 800]
+      @_size        = [1200, 600]
       @_cellHeight  = 10
       @_margin      = { top: 0, right: 0, bottom: 0, left: 0 }
       @_color       = (d) ->
@@ -108,11 +111,19 @@ d3.flameGraph = (selector) ->
       @_tooltipEnabled = true
       @_zoomEnabled = true
 
+      @container = d3.select(@_selector)
+        .append('svg')
+          .attr('class', 'flame-graph')
+          .attr('width', @size()[0])
+          .attr('height', @size()[1])
+        .append('g')
+          .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
+
     # FIXME: this expects un-partitioned data and returns partitioned data
     data: (data) ->
       return @_data if not data
       console.time('augment')
-      data = d3.flameGraphUtils.augment(data)
+      data = d3.flameGraphUtils.augment(data, '0')
       console.timeEnd('augment')
       @original = data if not @original
       console.time('partition')
@@ -160,15 +171,7 @@ d3.flameGraph = (selector) ->
       throw new Error("No DOM element provided") if not @_selector
       console.time('render')
 
-
-      @container = d3.select(selector)
-        .append('svg')
-          .attr('class', 'flame-graph')
-          .attr('width', @size()[0])
-          .attr('height', @size()[1])
-        .append('g')
-          .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
-
+      # reset size and scales
       @fontSize = (@cellHeight() / 10) * 0.4
 
       @x = d3.scale.linear()
@@ -182,44 +185,62 @@ d3.flameGraph = (selector) ->
         .range(d3.range(maxLevels)
           .map((cell) =>  ((cell + visibleCells) - (@_ancestors.length + maxLevels)) * @cellHeight()))
 
-      containers = @container
+      # JOIN
+      data = @data().filter((d) => @x(d.dx) > 0.4 and @y(d.y) >= 0 and not d.filler)
+      existingContainers = @container
         .selectAll('.node')
-        .data(@data().filter((d) =>
-          @x(d.dx) > 0.4 and @y(d.y) >= 0 and not d.filler))
-
-      containers.enter()
-          .append('g').attr('class', (d, idx) -> if idx == 0 then 'root node' else 'node')
-
-      @_renderNodes containers,
+        .data(data, (d) -> d.location)
+      console.log('update', existingContainers.data().map((d) -> d.name))
+      renderNode =
         x: (d) => @x(d.x)
         y: (d) => @y(d.y)
         width: (d) => @x(d.dx)
         height: (d) => @cellHeight()
         text: (d) => @label(d) if d.name and @x(d.dx) > 40
 
-      containers.exit().remove()
+      # UPDATE
+      @_renderNodes existingContainers, renderNode
+
+      # ENTER
+      newContainers = existingContainers.enter()
+          .append('g').attr('class', (d, idx) -> if idx == 0 then 'root node' else 'node')
+      console.log('enter', newContainers.data().map((d) -> d.name))
+      @_renderNodes newContainers, renderNode, true
+
+      # EXIT
+      console.log('exit', existingContainers.exit().data().map((d) -> d.name))
+      existingContainers.exit().remove()
+
+      @_renderAncestors()._enableNavigation()   if @zoomEnabled()
+      @_renderTooltip()                         if @tooltip()
 
       console.timeEnd('render')
       console.log("Processed #{@data().length} items")
       console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
-      @_renderAncestors()._enableNavigation()   if @zoomEnabled()
-      @_renderTooltip()                         if @tooltip()
       @
 
-    _renderNodes: (containers, attrs) ->
-      containers.append('rect')
-        .attr('width', attrs.width)
-        .attr('height', @cellHeight())
-        .attr('x', attrs.x)
-        .attr('y', attrs.y)
+    _renderNodes: (containers, attrs, enter = false) ->
+      # console.log(containers, enter)
+      targetRects = containers.selectAll('rect') if not enter
+      targetRects = containers.append('rect') if enter
+      targetRects
         .attr('fill', (d) => @color()(d))
+        .transition()
+          .attr('width', attrs.width)
+          .attr('height', @cellHeight())
+          .attr('x', attrs.x)
+          .attr('y', attrs.y)
 
-      containers.append('text')
+
+      targetLabels = containers.selectAll('text') if not enter
+      targetLabels = containers.append('text') if enter
+      containers.selectAll('text')
         .attr('class', 'label')
-        .attr('dy', "#{@fontSize / 2}em")
-        .attr('x', (d) => attrs.x(d) + 2)
-        .attr('y', (d, idx) => attrs.y(d, idx) + @cellHeight() / 2)
         .style('font-size', "#{@fontSize}em")
+        .transition()
+          .attr('dy', "#{@fontSize / 2}em")
+          .attr('x', (d) => attrs.x(d) + 2)
+          .attr('y', (d, idx) => attrs.y(d, idx) + @cellHeight() / 2)
         .text(attrs.text)
       @
 
@@ -264,6 +285,9 @@ d3.flameGraph = (selector) ->
         width: @width()
         height: @cellHeight()
         text: (d) => "↩ #{getClassAndMethodName(d.name)}"
+      , true
+
+      ancestors.exit().remove()
       @
 
     _enableNavigation: () ->

@@ -81,4 +81,5 @@ describe 'd3.flameGraph.hide', ->
       expect(getNode(data, [1])).to.have.property('value', 40)
       expect(getNode(data, [1, 0])).to.have.property('value', 20)
       expect(getNode(data, [1, 0, 0])).to.have.property('value', 0)
+      expect(getNode(data, [1, 0, 0, 0])).to.have.property('value', 0)
 

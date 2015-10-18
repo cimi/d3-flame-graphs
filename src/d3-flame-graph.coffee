@@ -1,12 +1,6 @@
 d3 = if @d3 then @d3 else require('d3')
 throw new Error("d3.js needs to be loaded") if not d3
 
-if window.debugging
-  console = window.console
-else
-  console = window.console
-  console.log = ->
-
 d3.flameGraphUtils =
   # augments each node in the tree with the maximum distance
   # it is from a terminal node, the list of parents linking
@@ -208,7 +202,6 @@ d3.flameGraph = (selector, root) ->
         .selectAll('.node')
         .data(data, (d) -> d.location)
         .attr('class', 'node')
-      console.log('update', existingContainers.data().map((d) -> d.name))
 
       # UPDATE
       @_renderNodes existingContainers, renderNode
@@ -217,11 +210,9 @@ d3.flameGraph = (selector, root) ->
       newContainers = existingContainers.enter()
           .append('g')
             .attr('class', 'node')
-      console.log('enter', newContainers.data().map((d) -> d.name))
       @_renderNodes newContainers, renderNode, true
 
       # EXIT
-      console.log('exit', existingContainers.exit().data().map((d) -> d.name))
       existingContainers.exit().remove()
 
       @_renderAncestors()._enableNavigation()   if @zoomEnabled()
@@ -233,7 +224,6 @@ d3.flameGraph = (selector, root) ->
       @
 
     _renderNodes: (containers, attrs, enter = false) ->
-      # console.log(containers, enter)
       targetRects = containers.selectAll('rect') if not enter
       targetRects = containers.append('rect') if enter
       targetRects
@@ -293,7 +283,7 @@ d3.flameGraph = (selector, root) ->
 
       renderAncestor =
         x: (d) => 0
-        y: (d) => console.log(d); return @height() - (d.value * @cellHeight())
+        y: (d) => return @height() - (d.value * @cellHeight())
         width: @width()
         height: @cellHeight()
         text: (d) => "↩ #{getClassAndMethodName(d.name)}"
@@ -303,7 +293,6 @@ d3.flameGraph = (selector, root) ->
         .selectAll('.ancestor')
         .data(d3.layout.partition().nodes(ancestorData[0]), (d) -> d.location)
       # UPDATE
-      console.log('update', ancestors.data().map((d) -> d.name))
       @_renderNodes ancestors, renderAncestor
 
       # ENTER
@@ -311,11 +300,9 @@ d3.flameGraph = (selector, root) ->
         .enter()
         .append('g')
           .attr('class', 'ancestor')
-      console.log('enter', newAncestors.data().map((d) -> d.name))
       @_renderNodes newAncestors, renderAncestor, true
 
       # EXIT
-      console.log('exit', ancestors.exit().data().map((d) -> d.name))
       ancestors.exit().remove()
       @
 

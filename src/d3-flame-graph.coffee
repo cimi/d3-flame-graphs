@@ -1,6 +1,68 @@
 d3 = if this.d3 then this.d3 else require('d3')
 throw new Error("d3.js needs to be loaded") if not d3
 
+d3.flameGraphUtils =
+  # augments each node in the tree with the maximum distance
+  # it is from a terminal node, the list of parents linking
+  # it to the root and filler nodes that balance the representation
+  augment: (node) ->
+    children = node.children
+    # d3.partition adds the reverse (depth), here we store the distance
+    # between a node and its furthest leaf
+    return node if node.augmented
+    node.originalValue = node.value
+    node.level = if node.children then 1 else 0
+    node.hidden = []
+    if not children?.length
+      node.augmented = true
+      return node
+
+    childSum = children.reduce ((sum, child) -> sum + child.value), 0
+    if childSum < node.value
+      children.push({ value: node.value - childSum, filler: true })
+
+    children.forEach(d3.flameGraphUtils.augment)
+
+    node.level += children.reduce ((max, child) -> Math.max(child.level, max)), 0
+    node.augmented = true
+    node
+
+  partition: (data) ->
+    d3.layout.partition()
+      .sort (a,b) ->
+        return  1 if a.filler # move fillers to the right
+        return -1 if b.filler # move fillers to the right
+        a.name.localeCompare(b.name)
+      .nodes(data)
+
+  hide: (nodes, unhide = false) ->
+    sum = (arr) -> arr.reduce ((acc, val) -> acc + val), 0
+    remove = (arr, val) ->
+      # we need to remove precisely one occurrence of initial value
+      pos = arr.indexOf(val)
+      arr.splice(pos, 1) if pos >= 0
+    process = (node, val) ->
+      if unhide
+        remove(node.hidden, val)
+      else
+        node.hidden.push(val)
+      node.value = Math.max(node.originalValue - sum(node.hidden), 0)
+    processChildren = (node, val) ->
+      return if not node.children
+      node.children.forEach (child) ->
+        process(child, val)
+        processChildren(child, val)
+    processParents = (node, val) ->
+      while node.parent
+        process(node.parent, val)
+        node = node.parent
+
+    nodes.forEach (node) ->
+      val = node.originalValue
+      processParents(node, val)
+      process(node, val)
+      processChildren(node, val)
+
 d3.flameGraph = ->
 
   getClassAndMethodName = (fqdn) ->
@@ -19,40 +81,6 @@ d3.flameGraph = ->
       maxHash += weight * (mod - 1)
       weight *= 0.7
     if maxHash > 0 then result / maxHash else result
-
-  # augments each node in the tree with the maximum distance
-  # it is from a terminal node, the list of parents linking
-  # it to the root and filler nodes that balance the representation
-  augment = (node) ->
-    children = node.children
-    # d3.partition adds the reverse (depth), here we store the distance
-    # between a node and its furthest terminal
-    node.level = 1 if not node.level
-    return node if node.augmented
-
-    if not children?.length
-      node.augmented = true
-      return node
-
-    childSum = children.reduce ((sum, child) -> sum + child.value), 0
-    if childSum < node.value
-      children.push({ value: node.value - childSum, filler: true })
-
-    children.forEach(augment)
-
-    node.level += children.map((child) -> child.level)
-        .reduce(((max, level) -> if level > max then return level else return max), 0)
-    node.augmented = true
-    node
-
-  partitionData = (data) ->
-    d3.layout
-      .partition()
-      .sort((a,b) ->
-        return 1  if a.filler # move fillers to the right
-        return -1 if b.filler # move fillers to the right
-        a.name.localeCompare(b.name))
-      .nodes(data)
 
   class FlameGraph
     constructor: () ->
@@ -79,16 +107,25 @@ d3.flameGraph = ->
       @_tooltipEnabled = true
       @_zoomEnabled = true
 
+    # FIXME: this expects un-partitioned data and returns partitioned data
     data: (data) ->
       return @_data if not data
       console.time('augment')
-      data = augment(data)
+      data = d3.flameGraphUtils.augment(data)
       console.timeEnd('augment')
       @original = data if not @original
       console.time('partition')
-      @_data = partitionData(data)
+      @_data = d3.flameGraphUtils.partition(data)
       console.timeEnd('partition')
       @
+
+    hide: (predicate, unhide = false) ->
+      matches = @select(predicate, false)
+      return if not matches.length
+      d3.flameGraphUtils.hide(matches, unhide)
+      # re-partition the data prior to rendering
+      d3.flameGraphUtils.partition(@original)
+      @render(@_selector)
 
     zoom: (node) ->
       throw new Error("Zoom is disabled!") if not @zoomEnabled()
@@ -110,12 +147,12 @@ d3.flameGraph = ->
       label = getClassAndMethodName(d.name)
       label.substr(0, Math.round(@x(d.dx) / (@cellHeight() / 10 * 4)))
 
-    select: (regex, onlyVisible = true) ->
+    select: (predicate, onlyVisible = true) ->
       if onlyVisible
-        return @container.selectAll('.node').filter((d) -> regex.test(d.name))
+        return @container.selectAll('.node').filter(predicate)
       else
         # re-partition original and filter that
-        result = partitionData(@original).filter((d) -> regex.test(d.name))
+        result = d3.flameGraphUtils.partition(@original).filter(predicate)
         return result
 
     render: (selector) ->
@@ -133,17 +170,18 @@ d3.flameGraph = ->
         .append('g')
           .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
 
-      @maxCells = Math.floor(@height() / @cellHeight())
-      @maxDepth = @data()[0].level
       @fontSize = (@cellHeight() / 10) * 0.4
 
       @x = d3.scale.linear()
         .domain([0, d3.max(@data(), (d) -> d.x + d.dx)])
         .range([0, @width()])
+
+      visibleCells = Math.floor(@height() / @cellHeight())
+      maxLevels = @data()[0].level
       @y = d3.scale.quantize()
         .domain([d3.max(@data(), (d) -> d.y), 0])
-        .range(d3.range(@maxDepth)
-          .map((cell) =>  (cell - @maxDepth + @maxCells - @_ancestors.length) * @cellHeight()))
+        .range(d3.range(maxLevels)
+          .map((cell) =>  ((cell + visibleCells) - (@_ancestors.length + maxLevels)) * @cellHeight()))
 
       containers = @container
         .selectAll('.node')

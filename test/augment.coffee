@@ -10,19 +10,13 @@ chai.use(require('chai-things'))
 # as it augments the existing d3 object
 require('../src/d3-flame-graph')
 
-# shut up the timer, does not make sense here
-console.time = ->
-console.timeEnd = ->
-
-describe 'augment nodes', ->
-  flameGraph = undefined
+describe 'd3.flameGraph.augment', ->
   root = undefined
   describe 'when provided with a simple tree', ->
     beforeEach (done) ->
       data = { value: 45, name:"root", children: [] }
       data.children.push({name: "c1", value: 10}, {name: "c2", value: 20})
-      flameGraph = d3.flameGraph().data(data)
-      root = flameGraph.original # TODO: depending on this field is hacky
+      root = d3.flameGraphUtils.augment(data)
       done()
 
     it 'should mark the root as augmented', ->
@@ -38,12 +32,12 @@ describe 'augment nodes', ->
       expect(filler).has.property('value', 15)
 
     it 'augments them with their level', ->
-      expect(root).has.property('level', 2)
-      expect(root.children).to.all.have.property('level', 1)
-
-    it 'augments them with their parents', ->
+      expect(root).has.property('level', 1)
+      expect(root.children).to.all.have.property('level', 0)
 
     it 'saves the original value in a separate field', ->
+      expect(root).has.property('originalValue', 45)
+      expect(root.children).to.all.have.property('originalValue')
 
   describe 'when provided with a multilevel tree', ->
     beforeEach (done) ->
@@ -51,18 +45,17 @@ describe 'augment nodes', ->
       firstChild = {name: "c11", value: 10, children: [{name: "c21", value: 1}]}
       secondChild = {name: "c12", value: 20}
       data.children.push(firstChild, secondChild)
-      flameGraph = d3.flameGraph().data(data)
-      root = flameGraph.original
+      root = d3.flameGraphUtils.augment(data)
       done()
 
     it 'augments the root with the correct level', ->
-      expect(root).has.property('level', 3)
+      expect(root).has.property('level', 2)
 
     it 'augments the children with the correct level', ->
-      expect(root.children).to.include.an.item.that.has.property('level', 2)
       expect(root.children).to.include.an.item.that.has.property('level', 1)
+      expect(root.children).to.include.an.item.that.has.property('level', 0)
 
     it 'augments the grandchildren with the correct level', ->
       grandchildren = root.children[0].children
-      expect(grandchildren).to.all.have.property('level', 1)
+      expect(grandchildren).to.all.have.property('level', 0)
 

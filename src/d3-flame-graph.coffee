@@ -36,45 +36,32 @@ d3.flameGraphUtils =
       .nodes(data)
 
   hide: (nodes, unhide = false) ->
-    previouslyHidden = (node) -> node.hidden.reduce ((acc, val) -> acc + val), 0
+    sum = (arr) -> arr.reduce ((acc, val) -> acc + val), 0
     remove = (arr, val) ->
       # we need to remove precisely one occurrence of initial value
       pos = arr.indexOf(val)
       arr.splice(pos, 1) if pos >= 0
-    processChildren = (node, initialValue) ->
+    process = (node, val) ->
+      if unhide
+        remove(node.hidden, val)
+      else
+        node.hidden.push(val)
+      node.value = Math.max(node.originalValue - sum(node.hidden), 0)
+    processChildren = (node, val) ->
       return if not node.children
       node.children.forEach (child) ->
-        if unhide
-          remove(child.hidden, initialValue)
-          child.value = Math.max(child.originalValue - previouslyHidden(child), 0)
-        else
-          child.hidden.push(initialValue)
-          child.value = 0
-        processChildren(child)
-
-    processItself = (node) ->
-      if unhide
-        remove(node.hidden, node.originalValue)
-        node.value = node.originalValue - previouslyHidden(node)
-      else
-        node.hidden.push(node.originalValue)
-        node.value = 0
-
-    processParents = (node) ->
-      initialValue = node.originalValue
+        process(child, val)
+        processChildren(child, val)
+    processParents = (node, val) ->
       while node.parent
-        if unhide
-          remove(node.parent.hidden, initialValue)
-          node.parent.value += initialValue
-        else
-          node.parent.value = Math.max(node.parent.value - initialValue, 0)
-          node.parent.hidden.push(initialValue)
+        process(node.parent, val)
         node = node.parent
 
     nodes.forEach (node) ->
-      processParents(node)
-      processItself(node)
-      processChildren(node, node.originalValue)
+      val = node.originalValue
+      processParents(node, val)
+      process(node, val)
+      processChildren(node, val)
 
 d3.flameGraph = ->
 

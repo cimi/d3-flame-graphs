@@ -8,10 +8,113 @@
     throw new Error("d3.js needs to be loaded");
   }
 
-  d3.flameGraph = function() {
-    var FlameGraph, augment, getClassAndMethodName, hash, partitionData;
+  d3.flameGraphUtils = {
+    augment: function(node, location) {
+      var childSum, children;
+      if (!node) {
+        debugger;
+      }
+      children = node.children;
+      if (node.augmented) {
+        return node;
+      }
+      node.originalValue = node.value;
+      node.level = node.children ? 1 : 0;
+      node.hidden = [];
+      node.location = location;
+      if (!(children != null ? children.length : void 0)) {
+        node.augmented = true;
+        return node;
+      }
+      childSum = children.reduce((function(sum, child) {
+        return sum + child.value;
+      }), 0);
+      if (childSum < node.value) {
+        children.push({
+          value: node.value - childSum,
+          filler: true
+        });
+      }
+      children.forEach(function(child, idx) {
+        return d3.flameGraphUtils.augment(child, "" + location + idx);
+      });
+      node.level += children.reduce((function(max, child) {
+        return Math.max(child.level, max);
+      }), 0);
+      node.augmented = true;
+      return node;
+    },
+    partition: function(data) {
+      return d3.layout.partition().sort(function(a, b) {
+        if (a.filler) {
+          return 1;
+        }
+        if (b.filler) {
+          return -1;
+        }
+        return a.name.localeCompare(b.name);
+      }).nodes(data);
+    },
+    hide: function(nodes, unhide) {
+      var process, processChildren, processParents, remove, sum;
+      if (unhide == null) {
+        unhide = false;
+      }
+      sum = function(arr) {
+        return arr.reduce((function(acc, val) {
+          return acc + val;
+        }), 0);
+      };
+      remove = function(arr, val) {
+        var pos;
+        pos = arr.indexOf(val);
+        if (pos >= 0) {
+          return arr.splice(pos, 1);
+        }
+      };
+      process = function(node, val) {
+        if (unhide) {
+          remove(node.hidden, val);
+        } else {
+          node.hidden.push(val);
+        }
+        return node.value = Math.max(node.originalValue - sum(node.hidden), 0);
+      };
+      processChildren = function(node, val) {
+        if (!node.children) {
+          return;
+        }
+        return node.children.forEach(function(child) {
+          process(child, val);
+          return processChildren(child, val);
+        });
+      };
+      processParents = function(node, val) {
+        var results;
+        results = [];
+        while (node.parent) {
+          process(node.parent, val);
+          results.push(node = node.parent);
+        }
+        return results;
+      };
+      return nodes.forEach(function(node) {
+        var val;
+        val = node.originalValue;
+        processParents(node, val);
+        process(node, val);
+        return processChildren(node, val);
+      });
+    }
+  };
+
+  d3.flameGraph = function(selector, root) {
+    var FlameGraph, getClassAndMethodName, hash;
     getClassAndMethodName = function(fqdn) {
       var tokens;
+      if (!fqdn) {
+        return "";
+      }
       tokens = fqdn.split(".");
       return tokens.slice(tokens.length - 2).join(".");
     };
@@ -30,57 +133,12 @@
         return result;
       }
     };
-    augment = function(node) {
-      var childSum, children;
-      children = node.children;
-      if (!node.level) {
-        node.level = 1;
-      }
-      if (node.augmented) {
-        return node;
-      }
-      if (!(children != null ? children.length : void 0)) {
-        node.augmented = true;
-        return node;
-      }
-      childSum = children.reduce((function(sum, child) {
-        return sum + child.value;
-      }), 0);
-      if (childSum < node.value) {
-        children.push({
-          value: node.value - childSum,
-          filler: true
-        });
-      }
-      children.forEach(augment);
-      node.level += children.map(function(child) {
-        return child.level;
-      }).reduce((function(max, level) {
-        if (level > max) {
-          return level;
-        } else {
-          return max;
-        }
-      }), 0);
-      node.augmented = true;
-      return node;
-    };
-    partitionData = function(data) {
-      return d3.layout.partition().sort(function(a, b) {
-        if (a.filler) {
-          return 1;
-        }
-        if (b.filler) {
-          return -1;
-        }
-        return a.name.localeCompare(b.name);
-      }).nodes(data);
-    };
     FlameGraph = (function() {
-      function FlameGraph() {
+      function FlameGraph(selector, root) {
+        this._selector = selector;
         this._generateAccessors(['size', 'margin', 'cellHeight', 'zoomEnabled', 'zoomAction', 'tooltip', 'color']);
         this._ancestors = [];
-        this._size = [1200, 800];
+        this._size = [1200, 600];
         this._cellHeight = 10;
         this._margin = {
           top: 0,
@@ -98,22 +156,37 @@
         };
         this._tooltipEnabled = true;
         this._zoomEnabled = true;
+        d3.select(this._selector).select('svg').remove();
+        this.container = d3.select(this._selector).append('svg').attr('class', 'flame-graph').attr('width', this.size()[0]).attr('height', this.size()[1]).append('g').attr('transform', "translate(" + (this.margin().left) + ", " + (this.margin().top) + ")");
+        console.time('augment');
+        this.original = d3.flameGraphUtils.augment(root, '0');
+        console.timeEnd('augment');
+        this.root(this.original);
       }
 
-      FlameGraph.prototype.data = function(data) {
-        if (!data) {
-          return this._data;
-        }
-        console.time('augment');
-        data = augment(data);
-        console.timeEnd('augment');
-        if (!this.original) {
-          this.original = data;
+      FlameGraph.prototype.root = function(root) {
+        if (!root) {
+          return this._root;
         }
         console.time('partition');
-        this._data = partitionData(data);
+        this._root = root;
+        this._data = d3.flameGraphUtils.partition(this._root);
         console.timeEnd('partition');
         return this;
+      };
+
+      FlameGraph.prototype.hide = function(predicate, unhide) {
+        var matches;
+        if (unhide == null) {
+          unhide = false;
+        }
+        matches = this.select(predicate, false);
+        if (!matches.length) {
+          return;
+        }
+        d3.flameGraphUtils.hide(matches, unhide);
+        this._data = d3.flameGraphUtils.partition(this._root);
+        return this.render();
       };
 
       FlameGraph.prototype.zoom = function(node) {
@@ -124,9 +197,9 @@
         if (indexOf.call(this._ancestors, node) >= 0) {
           this._ancestors = this._ancestors.slice(0, this._ancestors.indexOf(node));
         } else {
-          this._ancestors.push(this.data()[0]);
+          this._ancestors.push(this._root);
         }
-        this.data(node).render(this._selector);
+        this.root(node).render();
         if (typeof this._zoomAction === "function") {
           this._zoomAction(node);
         }
@@ -150,63 +223,48 @@
         return label.substr(0, Math.round(this.x(d.dx) / (this.cellHeight() / 10 * 4)));
       };
 
-      FlameGraph.prototype.select = function(regex, onlyVisible) {
+      FlameGraph.prototype.select = function(predicate, onlyVisible) {
         var result;
         if (onlyVisible == null) {
           onlyVisible = true;
         }
         if (onlyVisible) {
-          return this.container.selectAll('.node').filter(function(d) {
-            return regex.test(d.name);
-          });
+          return this.container.selectAll('.node').filter(predicate);
         } else {
-          result = partitionData(this.original).filter(function(d) {
-            return regex.test(d.name);
-          });
+          result = d3.flameGraphUtils.partition(this.original).filter(predicate);
           return result;
         }
       };
 
-      FlameGraph.prototype.render = function(selector) {
-        var containers, ref;
-        if (!(this._selector || selector)) {
-          throw new Error("The container's selector needs to be provided before rendering");
+      FlameGraph.prototype.render = function() {
+        var data, existingContainers, maxLevels, newContainers, ref, renderNode, visibleCells;
+        if (!this._selector) {
+          throw new Error("No DOM element provided");
         }
         console.time('render');
-        if (selector) {
-          this._selector = selector;
-        }
-        d3.select(selector).select('svg').remove();
-        this.container = d3.select(selector).append('svg').attr('class', 'flame-graph').attr('width', this.size()[0]).attr('height', this.size()[1]).append('g').attr('transform', "translate(" + (this.margin().left) + ", " + (this.margin().top) + ")");
-        this.maxCells = Math.floor(this.height() / this.cellHeight());
-        this.maxDepth = this.data()[0].level;
         this.fontSize = (this.cellHeight() / 10) * 0.4;
         this.x = d3.scale.linear().domain([
-          0, d3.max(this.data(), function(d) {
+          0, d3.max(this._data, function(d) {
             return d.x + d.dx;
           })
         ]).range([0, this.width()]);
+        visibleCells = Math.floor(this.height() / this.cellHeight());
+        maxLevels = this._root.level;
         this.y = d3.scale.quantize().domain([
-          d3.max(this.data(), function(d) {
+          d3.max(this._data, function(d) {
             return d.y;
           }), 0
-        ]).range(d3.range(this.maxDepth).map((function(_this) {
+        ]).range(d3.range(maxLevels).map((function(_this) {
           return function(cell) {
-            return (cell - _this.maxDepth + _this.maxCells - _this._ancestors.length) * _this.cellHeight();
+            return ((cell + visibleCells) - (_this._ancestors.length + maxLevels)) * _this.cellHeight();
           };
         })(this)));
-        containers = this.container.selectAll('.node').data(this.data().filter((function(_this) {
+        data = this._data.filter((function(_this) {
           return function(d) {
             return _this.x(d.dx) > 0.4 && _this.y(d.y) >= 0 && !d.filler;
           };
-        })(this))).enter().append('g').attr('class', function(d, idx) {
-          if (idx === 0) {
-            return 'root node';
-          } else {
-            return 'node';
-          }
-        });
-        this._renderNodes(containers, {
+        })(this));
+        renderNode = {
           x: (function(_this) {
             return function(d) {
               return _this.x(d.x);
@@ -234,26 +292,49 @@
               }
             };
           })(this)
-        });
-        console.timeEnd('render');
-        console.log("Processed " + (this.data().length) + " items");
-        console.log("Rendered " + ((ref = this.container.selectAll('.node')[0]) != null ? ref.length : void 0) + " elements");
+        };
+        existingContainers = this.container.selectAll('.node').data(data, function(d) {
+          return d.location;
+        }).attr('class', 'node');
+        this._renderNodes(existingContainers, renderNode);
+        newContainers = existingContainers.enter().append('g').attr('class', 'node');
+        this._renderNodes(newContainers, renderNode, true);
+        existingContainers.exit().remove();
         if (this.zoomEnabled()) {
           this._renderAncestors()._enableNavigation();
         }
         if (this.tooltip()) {
           this._renderTooltip();
         }
+        console.timeEnd('render');
+        console.log("Processed " + this._data.length + " items");
+        console.log("Rendered " + ((ref = this.container.selectAll('.node')[0]) != null ? ref.length : void 0) + " elements");
         return this;
       };
 
-      FlameGraph.prototype._renderNodes = function(containers, attrs) {
-        containers.append('rect').attr('width', attrs.width).attr('height', this.cellHeight()).attr('x', attrs.x).attr('y', attrs.y).attr('fill', (function(_this) {
+      FlameGraph.prototype._renderNodes = function(containers, attrs, enter) {
+        var targetLabels, targetRects;
+        if (enter == null) {
+          enter = false;
+        }
+        if (!enter) {
+          targetRects = containers.selectAll('rect');
+        }
+        if (enter) {
+          targetRects = containers.append('rect');
+        }
+        targetRects.attr('fill', (function(_this) {
           return function(d) {
             return _this.color()(d);
           };
-        })(this));
-        containers.append('text').attr('class', 'label').attr('dy', (this.fontSize / 2) + "em").attr('x', (function(_this) {
+        })(this)).transition().attr('width', attrs.width).attr('height', this.cellHeight()).attr('x', attrs.x).attr('y', attrs.y);
+        if (!enter) {
+          targetLabels = containers.selectAll('text');
+        }
+        if (enter) {
+          targetLabels = containers.append('text');
+        }
+        containers.selectAll('text').attr('class', 'label').style('font-size', this.fontSize + "em").transition().attr('dy', (this.fontSize / 2) + "em").attr('x', (function(_this) {
           return function(d) {
             return attrs.x(d) + 2;
           };
@@ -261,7 +342,7 @@
           return function(d, idx) {
             return attrs.y(d, idx) + _this.cellHeight() / 2;
           };
-        })(this)).style('font-size', this.fontSize + "em").text(attrs.text);
+        })(this)).text(attrs.text);
         return this;
       };
 
@@ -297,24 +378,34 @@
       };
 
       FlameGraph.prototype._renderAncestors = function() {
-        var ancestorData, ancestors, containers;
+        var ancestor, ancestorData, ancestors, idx, j, len, newAncestors, prev, renderAncestor;
+        if (!this._ancestors.length) {
+          ancestors = this.container.selectAll('.ancestor').remove();
+          return this;
+        }
         ancestorData = this._ancestors.map(function(ancestor, idx) {
           return {
             name: ancestor.name,
-            value: idx
+            value: idx + 1,
+            location: ancestor.location
           };
         });
-        ancestors = this.container.selectAll('.ancestor').data(ancestorData);
-        containers = ancestors.enter().append('g').attr('class', 'ancestor');
-        this._renderNodes(containers, {
+        for (idx = j = 0, len = ancestorData.length; j < len; idx = ++j) {
+          ancestor = ancestorData[idx];
+          prev = ancestorData[idx - 1];
+          if (prev) {
+            prev.children = [ancestor];
+          }
+        }
+        renderAncestor = {
           x: (function(_this) {
             return function(d) {
               return 0;
             };
           })(this),
           y: (function(_this) {
-            return function(d, idx) {
-              return _this.height() - ((idx + 1) * _this.cellHeight());
+            return function(d) {
+              return _this.height() - (d.value * _this.cellHeight());
             };
           })(this),
           width: this.width(),
@@ -324,22 +415,29 @@
               return "↩ " + (getClassAndMethodName(d.name));
             };
           })(this)
+        };
+        ancestors = this.container.selectAll('.ancestor').data(d3.layout.partition().nodes(ancestorData[0]), function(d) {
+          return d.location;
         });
+        this._renderNodes(ancestors, renderAncestor);
+        newAncestors = ancestors.enter().append('g').attr('class', 'ancestor');
+        this._renderNodes(newAncestors, renderAncestor, true);
+        ancestors.exit().remove();
         return this;
       };
 
       FlameGraph.prototype._enableNavigation = function() {
         this.container.selectAll('.node').on('click', (function(_this) {
-          return function(d, idx) {
-            d3.event.stopPropagation();
-            if (idx > 0) {
+          return function(d) {
+            _this.tip.hide();
+            if (Math.round(_this.width() - _this.x(d.dx)) > 0) {
               return _this.zoom(d);
             }
           };
         })(this));
         this.container.selectAll('.ancestor').on('click', (function(_this) {
           return function(d, idx) {
-            d3.event.stopPropagation();
+            _this.tip.hide();
             return _this.zoom(_this._ancestors[idx]);
           };
         })(this));
@@ -367,7 +465,7 @@
       return FlameGraph;
 
     })();
-    return new FlameGraph();
+    return new FlameGraph(selector, root);
   };
 
 }).call(this);

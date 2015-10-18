@@ -39,7 +39,7 @@ d3.json "data/profile.json", (err, data) ->
   d3.select('#highlight')
     .on 'click', () ->
       nodes = flameGraph.select((d) -> /java\.util.*/.test(d.name))
-      nodes.classed("highlight", (d, i) -> not d3.select(this).classed("highlight"))
+      nodes.classed("highlight", (d, i) -> not d3.select(@).classed("highlight"))
 
   d3.select('#zoom')
     .on 'click', () ->
@@ -47,6 +47,9 @@ d3.json "data/profile.json", (err, data) ->
       node = flameGraph.select(((d) -> /java\.util\.concurrent.*/.test(d.name)), false)[0]
       flameGraph.zoom(node)
 
+  # hacky way of implementing toggle behaviour, can't be bothered right now
+  unhide = false
   d3.select('#hide')
     .on 'click', () ->
-      flameGraph.hide((d) -> /Unsafe\.park$/.test(d.name))
+      flameGraph.hide ((d) -> /Unsafe\.park$/.test(d.name) or /Object\.wait/.test(d.name)), unhide
+      unhide = !unhide

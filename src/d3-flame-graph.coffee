@@ -107,6 +107,7 @@ d3.flameGraph = ->
       @_tooltipEnabled = true
       @_zoomEnabled = true
 
+    # FIXME: this expects un-partitioned data and returns partitioned data
     data: (data) ->
       return @_data if not data
       console.time('augment')
@@ -120,7 +121,10 @@ d3.flameGraph = ->
 
     hide: (predicate, unhide = false) ->
       matches = @select(predicate, false)
-      d3.flameGraphUtils.hide(matches)
+      return if not matches.length
+      d3.flameGraphUtils.hide(matches, unhide)
+      # re-partition the data prior to rendering
+      d3.flameGraphUtils.partition(@original)
       @render(@_selector)
 
     zoom: (node) ->

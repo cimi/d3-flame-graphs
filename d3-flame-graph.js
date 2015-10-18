@@ -2,14 +2,14 @@
   var d3,
     indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
 
-  d3 = window.d3;
+  d3 = this.d3 ? this.d3 : require('d3');
 
   if (!d3) {
     throw new Error("d3.js needs to be loaded");
   }
 
   d3.flameGraph = function() {
-    var FlameGraph, addFillerNodes, addMaxDepth, getClassAndMethodName, hash, partitionData;
+    var FlameGraph, augment, getClassAndMethodName, hash, partitionData;
     getClassAndMethodName = function(fqdn) {
       var tokens;
       tokens = fqdn.split(".");
@@ -30,15 +30,17 @@
         return result;
       }
     };
-    addFillerNodes = function(node) {
+    augment = function(node) {
       var childSum, children;
       children = node.children;
-      if (!(children != null ? children.length : void 0)) {
+      if (!node.level) {
+        node.level = 1;
+      }
+      if (node.augmented) {
         return node;
       }
-      if (children.filter(function(child) {
-        return child.filler;
-      }).length > 0) {
+      if (!(children != null ? children.length : void 0)) {
+        node.augmented = true;
         return node;
       }
       childSum = children.reduce((function(sum, child) {
@@ -50,33 +52,17 @@
           filler: true
         });
       }
-      children.forEach(addFillerNodes);
-      return node;
-    };
-    addMaxDepth = function(node) {
-      var computeDepth;
-      computeDepth = function(node) {
-        var max;
-        if (!node) {
-          return 0;
+      children.forEach(augment);
+      node.level += children.map(function(child) {
+        return child.level;
+      }).reduce((function(max, level) {
+        if (level > max) {
+          return level;
+        } else {
+          return max;
         }
-        if (!node.children) {
-          return 1;
-        }
-        if (node.maxDepth) {
-          return node.maxDepth;
-        }
-        max = node.children.map(computeDepth).reduce((function(max, depth) {
-          if (depth > max) {
-            return depth;
-          } else {
-            return max;
-          }
-        }), 0);
-        node.maxDepth = max + 1;
-        return node.maxDepth;
-      };
-      computeDepth(node);
+      }), 0);
+      node.augmented = true;
       return node;
     };
     partitionData = function(data) {
@@ -92,7 +78,7 @@
     };
     FlameGraph = (function() {
       function FlameGraph() {
-        this._generateAccessors(['size', 'margin', 'cellHeight', 'zoomEnabled', 'tooltip', 'color']);
+        this._generateAccessors(['size', 'margin', 'cellHeight', 'zoomEnabled', 'zoomAction', 'tooltip', 'color']);
         this._ancestors = [];
         this._size = [1200, 800];
         this._cellHeight = 10;
@@ -118,10 +104,15 @@
         if (!data) {
           return this._data;
         }
+        console.time('augment');
+        data = augment(data);
+        console.timeEnd('augment');
         if (!this.original) {
           this.original = data;
         }
-        this._data = partitionData(addMaxDepth(addFillerNodes(data)));
+        console.time('partition');
+        this._data = partitionData(data);
+        console.timeEnd('partition');
         return this;
       };
 
@@ -129,12 +120,16 @@
         if (!this.zoomEnabled()) {
           throw new Error("Zoom is disabled!");
         }
+        this.tip.hide();
         if (indexOf.call(this._ancestors, node) >= 0) {
           this._ancestors = this._ancestors.slice(0, this._ancestors.indexOf(node));
         } else {
           this._ancestors.push(this.data()[0]);
         }
         this.data(node).render(this._selector);
+        if (typeof this._zoomAction === "function") {
+          this._zoomAction(node);
+        }
         return this;
       };
 
@@ -184,7 +179,7 @@
         d3.select(selector).select('svg').remove();
         this.container = d3.select(selector).append('svg').attr('class', 'flame-graph').attr('width', this.size()[0]).attr('height', this.size()[1]).append('g').attr('transform', "translate(" + (this.margin().left) + ", " + (this.margin().top) + ")");
         this.maxCells = Math.floor(this.height() / this.cellHeight());
-        this.maxDepth = this.data()[0].maxDepth;
+        this.maxDepth = this.data()[0].level;
         this.fontSize = (this.cellHeight() / 10) * 0.4;
         this.x = d3.scale.linear().domain([
           0, d3.max(this.data(), function(d) {
@@ -202,7 +197,7 @@
         })(this)));
         containers = this.container.selectAll('.node').data(this.data().filter((function(_this) {
           return function(d) {
-            return _this.x(d.dx) > 0.1 && _this.y(d.y) >= 0 && !d.filler;
+            return _this.x(d.dx) > 0.4 && _this.y(d.y) >= 0 && !d.filler;
           };
         })(this))).enter().append('g').attr('class', function(d, idx) {
           if (idx === 0) {
@@ -241,6 +236,7 @@
           })(this)
         });
         console.timeEnd('render');
+        console.log("Processed " + (this.data().length) + " items");
         console.log("Rendered " + ((ref = this.container.selectAll('.node')[0]) != null ? ref.length : void 0) + " elements");
         if (this.zoomEnabled()) {
           this._renderAncestors()._enableNavigation();
@@ -266,7 +262,6 @@
             return attrs.y(d, idx) + _this.cellHeight() / 2;
           };
         })(this)).style('font-size', this.fontSize + "em").text(attrs.text);
-        containers.append('rect').attr('class', 'overlay').attr('width', attrs.width).attr('height', this.cellHeight()).attr('x', attrs.x).attr('y', attrs.y);
         return this;
       };
 

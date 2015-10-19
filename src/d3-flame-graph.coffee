@@ -89,7 +89,6 @@ d3.flameGraph = (selector, root) ->
     constructor: (selector, root) ->
       @_selector = selector
       @_generateAccessors([
-        'size',
         'margin',
         'cellHeight',
         'zoomEnabled',
@@ -99,7 +98,7 @@ d3.flameGraph = (selector, root) ->
       @_ancestors = []
 
       # defaults
-      @_size        = [1200, 600]
+      @_size        = [1200, 800]
       @_cellHeight  = 10
       @_margin      = { top: 0, right: 0, bottom: 0, left: 0 }
       @_color       = (d) ->
@@ -127,6 +126,14 @@ d3.flameGraph = (selector, root) ->
       @original = d3.flameGraphUtils.augment(root, '0')
       console.timeEnd('augment')
       @root(@original)
+
+    size: (size) ->
+      return @_size if not size
+      @_size = size
+      d3.select(@_selector).select('.flame-graph')
+        .attr('width', @_size[0])
+        .attr('height', @_size[1])
+      @
 
     root: (root) ->
       return @_root if not root

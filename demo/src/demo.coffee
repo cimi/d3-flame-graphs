@@ -8,7 +8,6 @@ convert = (rawData, valueFunc) ->
   # timeElapsed = new Date()
   # timeElapsed.setSeconds(value)
   # timeFormat = countdown.DAYS | countdown.HOURS | countdown.MINUTES | countdown.SECONDS
-  runnableVals.push(rawData.c['RUNNABLE']) if rawData.c['RUNNABLE']
   node =
     name: rawData.n,
     value: valueFunc(rawData),
@@ -32,7 +31,6 @@ d3.json "data/profile.json", (err, data) ->
 
 
   profile = convert(data.profile, allStates)
-  console.log(runnableVals.sort((a, b) -> a - b))
   tooltip = (d) -> "#{d.name} <br /><br />
     #{d.value} samples<br />
     #{((d.value / profile.value) * 100).toFixed(2)}% of total"

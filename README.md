@@ -21,6 +21,7 @@ This is a d3.js plugin that renders flame graphs from hierarchical data.
 * __Zooming__ - on click, the container re-renders the subgraph associated with the clicked node. The previous roots are rendered at the bottom of the graph and are clickable - you can revert to a previous state. An optional callback can be provided if you want to trigger other changes when zooming.
 * __Tooltips__ - when hovering over nodes a tooltip can be displayed. The tooltip's contents are parametrizable.
 * __Filtering__ - nodes can be selected by name using regex. This enables name-based navigation, highlighting or adding other custom behaviour to certain nodes. See the demo for examples.
+* __Hiding across the stack__ - some call paterns only add noise to a graph (like `Object.wait` or `Unsafe.park`, for example). The plugin offers the capability to hide node selections across the stack (their value is subtracted from the parent nodes and their children are hidden). This leads to clearer views of the state of the world. 
 
 ## How was this made?
 
@@ -48,7 +49,7 @@ If the values are specified, follows the [d3 conventions on margins](http://bl.o
 
 <a href="#cellHeight">#</a> flameGraph.__cellHeight__([_cellHeight_])
 
-If _cellHeight_ is specified, sets the height of the rectangles in the flame graph to the provided value. If _cellHeight_ is not specified, returns the current value. Defaults to 20.
+If _cellHeight_ is specified, sets the height of the rectangles in the flame graph to the provided value. If _cellHeight_ is not specified, returns the current value. Defaults to 20. The graph height should be divisible by the cell height so the nodes align properly.
 
 <a href="#color">#</a> flameGraph.__color__([_[color(d)]_])
 
@@ -68,7 +69,7 @@ The data the flame graph is rendered from. It expects nested data in the form:
 }
 ```
 
-The data is supposed to have 'filler nodes', due to fact that D3 considers the value of a node to be the sum of its children rather than its explicit value. More details in [this issue](https://github.com/mbostock/d3/pull/574).
+The data is augmented with 'filler nodes' by the plugin, due to the fact that D3 considers the value of a node to be the sum of its children rather than its explicit value. More details in [this issue](https://github.com/mbostock/d3/pull/574). This should be transparent to clients as the filler node augmentation is done internally.
 
 <a href="#zoomEnabled">#</a> flameGraph.__zoomEnabled__(_enabled_)
 
@@ -80,25 +81,35 @@ If a _function_ is provided, on every zoom - clicking a node or calling the zoom
 
 <a href="#zoom">#</a> flameGraph.__zoom__(_node_)
 
-If the zoom is enabled, re-renders the graph with the given node as root. The previous roots are drawn at the bottom of the graph, by clicking on it them you can revert back to previous states. Prior to zooming, any svg elements present in the given container will be cleared.
+If zoom is enabled, re-renders the graph with the given node as root. The previous roots are drawn at the bottom of the graph, by clicking on it them you can revert back to previous states. Prior to zooming, any svg elements present in the given container will be cleared.
 
-If the zoom is disabled, this method will throw an error.
+If zoom is disabled, this method will throw an error.
 
 [See the demo code](https://github.com/cimi/d3-flame-graphs/blob/master/demo/src/demo.coffee#L69) for an example.
 
 <a href="#tooltip">#</a> flameGraph.__tooltip__(_function_)
 
-If a _function_ is provided, a tooltip will be shown on mouseover for each cell. The ancestor nodes do not get a tooltip. The function receives a data node as its parameter and needs to return an HTML string that will be rendered inside the tooltip. The d3-tip plugin is responsible for rendering the tooltip. If set to false or not called, the tooltip is disabled and nothing is rendered on mouseover.
+If a _function_ is provided, a tooltip will be shown on mouseover for each cell. Ancestor nodes do not get a tooltip. The function receives a data node as its parameter and needs to return an HTML string that will be rendered inside the tooltip. The d3-tip plugin is responsible for rendering the tooltip. If set to false or not called, the tooltip is disabled and nothing is rendered on mouseover.
 
-<a href="#render">#</a> flameGraph.__select__(_regex_, [_isDisplayed_])
+<a href="#select">#</a> flameGraph.__select__(_predicate_, [_isDisplayed_])
 
-Selects the elements from the current dataset which match the given _regex_. If _isDisplayed_ is set to false, it will search all the nodes (the first dataset passed to the instance of the flame graph) and return an array of data nodes. _isDisplayed_ defaults to true, in that case it will only search the currently displayed elements and returns a d3 selection of DOM elements.
+Selects the elements from the current dataset which match the given _predicate_ function. If _isDisplayed_ is set to false, it will search all the nodes starting from the root passed to the flame graph constructor and return an array of data nodes. _isDisplayed_ defaults to true, in that case it will only search the currently displayed elements and returns a d3 selection of DOM elements.
 
-[The demo code contains a usage example](https://github.com/cimi/d3-flame-graphs/blob/master/demo/src/demo.coffee#L54).
+[The demo code contains a usage example](https://github.com/cimi/d3-flame-graphs/blob/master/demo/src/demo.coffee).
+
+<a href="#hide">#</a> flameGraph.__hide__(_predicate_, [_unhide_])
+
+Hides elements that match the given _predicate_ function from the current dataset. The targeted elements and their children are hidden. The value of the target is subtracted from its ancestors so that it's effect is removed across the stack.
+
+If _unhide_ is set to true, it will perform the reverse operation and re-add the previously subtracted values. _unhide_ defaults to false.
+
+As this operation needs to traverse the subtree for all matched items, it can potentially be slow on generic queries over large datasets.
+
+[The demo code contains a usage example](https://github.com/cimi/d3-flame-graphs/blob/master/demo/src/demo.coffee).
 
 <a href="#render">#</a> flameGraph.__render__()
 
-Triggers a repaint of the flame graph, using the values previously fed in as parameters. This is the only method besides zoom that triggers repaint so you need to call it after changing the other parameters to see the changes take effect.
+Triggers a repaint of the flame graph, using the values previously fed in as parameters. This is the only method besides zoom and hide that triggers repaint so you need to call it after changing other parameters like size or cell-height in order to see the changes take effect.
 
 ### Sample usage:
 

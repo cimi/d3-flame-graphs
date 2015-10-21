@@ -38,7 +38,6 @@ d3.json "data/profile.json", (err, data) ->
     .size([1200, 600])
     .cellHeight(20)
     .zoomEnabled(true)
-    # .zoomAction((d) -> console.log(d))
     .tooltip(tooltip)
     .render()
 
@@ -53,7 +52,6 @@ d3.json "data/profile.json", (err, data) ->
       node = flameGraph.select(((d) -> /CountDownLatch\.await$/.test(d.name)), false)[0]
       flameGraph.zoom(node)
 
-  # hacky way of implementing toggle behaviour, can't be bothered right now
   unhide = false
   d3.select('#hide')
     .on 'click', () ->
@@ -67,6 +65,5 @@ d3.json "data/profile.json", (err, data) ->
         .size([1200, 600])
         .cellHeight(20)
         .zoomEnabled(true)
-        # .zoomAction((d) -> console.log(d))
         .tooltip(tooltip)
         .render()

@@ -98,7 +98,7 @@ d3.flameGraph = (selector, root) ->
 
       # defaults
       @_size        = [1200, 800]
-      @_cellHeight  = 10
+      @_cellHeight  = 20
       @_margin      = { top: 0, right: 0, bottom: 0, left: 0 }
       @_color       = (d) ->
         val = hash(d.name)
@@ -115,8 +115,8 @@ d3.flameGraph = (selector, root) ->
       @container = d3.select(@_selector)
         .append('svg')
           .attr('class', 'flame-graph')
-          .attr('width', @size()[0])
-          .attr('height', @size()[1])
+          .attr('width', @_size[0])
+          .attr('height', @_size[1])
         .append('g')
           .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
 

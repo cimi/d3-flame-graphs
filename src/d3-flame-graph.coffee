@@ -6,7 +6,6 @@ d3.flameGraphUtils =
   # it is from a terminal node, the list of parents linking
   # it to the root and filler nodes that balance the representation
   augment: (node, location) ->
-    debugger if not node
     children = node.children
     # d3.partition adds the reverse (depth), here we store the distance
     # between a node and its furthest leaf
@@ -23,8 +22,8 @@ d3.flameGraphUtils =
     if childSum < node.value
       children.push({ value: node.value - childSum, filler: true })
 
-    children.forEach((child, idx) -> d3.flameGraphUtils.augment(child, "#{location}#{idx}"))
-
+    children.forEach((child, idx) ->
+      d3.flameGraphUtils.augment(child, location.concat([idx])))
     node.level += children.reduce ((max, child) -> Math.max(child.level, max)), 0
     node.augmented = true
     node
@@ -89,7 +88,6 @@ d3.flameGraph = (selector, root) ->
     constructor: (selector, root) ->
       @_selector = selector
       @_generateAccessors([
-        'size',
         'margin',
         'cellHeight',
         'zoomEnabled',
@@ -99,8 +97,8 @@ d3.flameGraph = (selector, root) ->
       @_ancestors = []
 
       # defaults
-      @_size        = [1200, 600]
-      @_cellHeight  = 10
+      @_size        = [1200, 800]
+      @_cellHeight  = 20
       @_margin      = { top: 0, right: 0, bottom: 0, left: 0 }
       @_color       = (d) ->
         val = hash(d.name)
@@ -117,16 +115,24 @@ d3.flameGraph = (selector, root) ->
       @container = d3.select(@_selector)
         .append('svg')
           .attr('class', 'flame-graph')
-          .attr('width', @size()[0])
-          .attr('height', @size()[1])
+          .attr('width', @_size[0])
+          .attr('height', @_size[1])
         .append('g')
           .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
 
       # initial processing of data
       console.time('augment')
-      @original = d3.flameGraphUtils.augment(root, '0')
+      @original = d3.flameGraphUtils.augment(root, [0])
       console.timeEnd('augment')
       @root(@original)
+
+    size: (size) ->
+      return @_size if not size
+      @_size = size
+      d3.select(@_selector).select('.flame-graph')
+        .attr('width', @_size[0])
+        .attr('height', @_size[1])
+      @
 
     root: (root) ->
       return @_root if not root
@@ -200,7 +206,7 @@ d3.flameGraph = (selector, root) ->
         text: (d) => @label(d) if d.name and @x(d.dx) > 40
       existingContainers = @container
         .selectAll('.node')
-        .data(data, (d) -> d.location)
+        .data(data, (d) -> d.location.join("."))
         .attr('class', 'node')
 
       # UPDATE
@@ -291,7 +297,7 @@ d3.flameGraph = (selector, root) ->
       # JOIN
       ancestors = @container
         .selectAll('.ancestor')
-        .data(d3.layout.partition().nodes(ancestorData[0]), (d) -> d.location)
+        .data(d3.layout.partition().nodes(ancestorData[0]), (d) -> d.location.join("."))
       # UPDATE
       @_renderNodes ancestors, renderAncestor
 

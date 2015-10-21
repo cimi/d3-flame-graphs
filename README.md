@@ -30,9 +30,13 @@ This plugin was built using gulp and coffeescript. CircleCI runs tests on every 
 
 The methods on the flame graph plugin follow the [d3.js conventions](http://bost.ocks.org/mike/chart/) on method chaining and accessors.
 
-<a href="#flameGraph">#</a> d3.flameGraph()
+<a href="#flameGraph">#</a> d3.flameGraph(_selector_, _data_)
 
 Constructs a new flame graph.
+
+The selector value is required, it defines the DOM element to which the SVG will be appended. Prior to rendering, any svg elements present in the given container will be cleared.
+
+The data value is also required, it should be the root of the profile under analysis. There is no need to partition the data prior to feeding in to the plugin as partitioning is done internally. Any operation on the data (zooming, selecting, hiding) will use this value as start of traversal. 
 
 <a href="#size">#</a> flameGraph.__size__([_[width, height]_])
 
@@ -44,7 +48,7 @@ If the values are specified, follows the [d3 conventions on margins](http://bl.o
 
 <a href="#cellHeight">#</a> flameGraph.__cellHeight__([_cellHeight_])
 
-If _cellHeight_ is specified, sets the height of the rectangles in the flame graph to the provided value. If _cellHeight_ is not specified, returns the current value. Defaults to 10.
+If _cellHeight_ is specified, sets the height of the rectangles in the flame graph to the provided value. If _cellHeight_ is not specified, returns the current value. Defaults to 20.
 
 <a href="#color">#</a> flameGraph.__color__([_[color(d)]_])
 
@@ -54,12 +58,12 @@ The default function uses a hash of the node's short name to generate the color.
 
 <a href="#data">#</a> flameGraph.__data__([_data_])
 
-The data the flame graph is rendered from. It expects a nested data in the form:
+The data the flame graph is rendered from. It expects nested data in the form:
 
 ```
 {
+      "name": "<name from which the label is derived>",
       "value": <number representing the sample count of the node>,
-      "time": "<string representing the total time spent, used in the tooltip>",
       "children": [<child object>, <child object>, ...]
 }
 ```
@@ -92,11 +96,9 @@ Selects the elements from the current dataset which match the given _regex_. If 
 
 [The demo code contains a usage example](https://github.com/cimi/d3-flame-graphs/blob/master/demo/src/demo.coffee#L54).
 
-<a href="#render">#</a> flameGraph.__render__(_selector_)
+<a href="#render">#</a> flameGraph.__render__()
 
 Triggers a repaint of the flame graph, using the values previously fed in as parameters. This is the only method besides zoom that triggers repaint so you need to call it after changing the other parameters to see the changes take effect.
-
-The selector value is required, it defines the DOM element to which the SVG will be appended. Prior to rendering, any svg elements present in the given container will be cleared.
 
 ### Sample usage:
 
@@ -108,23 +110,28 @@ d3.json "data/profile.json", (err, data) ->
   tooltip = (d) -> "#{d.name} <br /><br />
     #{d.value} samples<br />
     #{((d.value / profile.value) * 100).toFixed(2)}% of total"
-  flameGraph = d3.flameGraph()
-    .size([1200, 600])
-    .cellHeight(20)
-    .data(profile)
-    .zoomEnabled(true)
-    .zoomAction((d) -> console.log(d))
-    .tooltip(tooltip)
-    .render('#d3-flame-graph')
+    flameGraph = d3.flameGraph('#d3-flame-graph', profile)
+      .size([1200, 600])
+      .cellHeight(20)
+      .zoomEnabled(true)
+      .zoomAction((d) -> console.log(d))
+      .tooltip(tooltip)
+      .render()
 
   d3.select('#highlight')
     .on 'click', () ->
-      nodes = flameGraph.select(/java\.util.*/)
-      nodes.classed("highlight", (d, i) -> not d3.select(this).classed("highlight"))
+      nodes = flameGraph.select((d) -> /java\.util.*/.test(d.name))
+      nodes.classed("highlight", (d, i) -> not d3.select(@).classed("highlight"))
 
   d3.select('#zoom')
     .on 'click', () ->
       # jump to the first java.util.concurrent method we can find
-      node = flameGraph.select(/java\.util\.concurrent.*/, false)[0]
+      node = flameGraph.select(((d) -> /CountDownLatch\.await$/.test(d.name)), false)[0]
       flameGraph.zoom(node)
+
+  unhide = false
+  d3.select('#hide')
+    .on 'click', () ->
+      flameGraph.hide ((d) -> /Unsafe\.park$/.test(d.name) or /Object\.wait$/.test(d.name)), unhide
+      unhide = !unhide
 ```

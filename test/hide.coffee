@@ -20,7 +20,7 @@ describe 'd3.flameGraph.hide', ->
     beforeEach (done) ->
       # deep copy because of require caching
       data = JSON.parse(JSON.stringify(original))
-      data = d3.flameGraphUtils.augment(data)
+      data = d3.flameGraphUtils.augment(data, [0])
       d3.flameGraphUtils.partition(data)
       done()
 
@@ -54,7 +54,7 @@ describe 'd3.flameGraph.hide', ->
     beforeEach (done) ->
       # deep copy because of require caching
       data = JSON.parse(JSON.stringify(original))
-      data = d3.flameGraphUtils.augment(data)
+      data = d3.flameGraphUtils.augment(data, [0])
       d3.flameGraphUtils.partition(data)
       done()
 

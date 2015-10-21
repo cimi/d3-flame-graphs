@@ -11,9 +11,6 @@
   d3.flameGraphUtils = {
     augment: function(node, location) {
       var childSum, children;
-      if (!node) {
-        debugger;
-      }
       children = node.children;
       if (node.augmented) {
         return node;
@@ -36,7 +33,7 @@
         });
       }
       children.forEach(function(child, idx) {
-        return d3.flameGraphUtils.augment(child, "" + location + idx);
+        return d3.flameGraphUtils.augment(child, location.concat([idx]));
       });
       node.level += children.reduce((function(max, child) {
         return Math.max(child.level, max);
@@ -136,10 +133,10 @@
     FlameGraph = (function() {
       function FlameGraph(selector, root) {
         this._selector = selector;
-        this._generateAccessors(['size', 'margin', 'cellHeight', 'zoomEnabled', 'zoomAction', 'tooltip', 'color']);
+        this._generateAccessors(['margin', 'cellHeight', 'zoomEnabled', 'zoomAction', 'tooltip', 'color']);
         this._ancestors = [];
-        this._size = [1200, 600];
-        this._cellHeight = 10;
+        this._size = [1200, 800];
+        this._cellHeight = 20;
         this._margin = {
           top: 0,
           right: 0,
@@ -157,12 +154,21 @@
         this._tooltipEnabled = true;
         this._zoomEnabled = true;
         d3.select(this._selector).select('svg').remove();
-        this.container = d3.select(this._selector).append('svg').attr('class', 'flame-graph').attr('width', this.size()[0]).attr('height', this.size()[1]).append('g').attr('transform', "translate(" + (this.margin().left) + ", " + (this.margin().top) + ")");
+        this.container = d3.select(this._selector).append('svg').attr('class', 'flame-graph').attr('width', this._size[0]).attr('height', this._size[1]).append('g').attr('transform', "translate(" + (this.margin().left) + ", " + (this.margin().top) + ")");
         console.time('augment');
-        this.original = d3.flameGraphUtils.augment(root, '0');
+        this.original = d3.flameGraphUtils.augment(root, [0]);
         console.timeEnd('augment');
         this.root(this.original);
       }
+
+      FlameGraph.prototype.size = function(size) {
+        if (!size) {
+          return this._size;
+        }
+        this._size = size;
+        d3.select(this._selector).select('.flame-graph').attr('width', this._size[0]).attr('height', this._size[1]);
+        return this;
+      };
 
       FlameGraph.prototype.root = function(root) {
         if (!root) {
@@ -294,7 +300,7 @@
           })(this)
         };
         existingContainers = this.container.selectAll('.node').data(data, function(d) {
-          return d.location;
+          return d.location.join(".");
         }).attr('class', 'node');
         this._renderNodes(existingContainers, renderNode);
         newContainers = existingContainers.enter().append('g').attr('class', 'node');
@@ -417,7 +423,7 @@
           })(this)
         };
         ancestors = this.container.selectAll('.ancestor').data(d3.layout.partition().nodes(ancestorData[0]), function(d) {
-          return d.location;
+          return d.location.join(".");
         });
         this._renderNodes(ancestors, renderAncestor);
         newAncestors = ancestors.enter().append('g').attr('class', 'ancestor');

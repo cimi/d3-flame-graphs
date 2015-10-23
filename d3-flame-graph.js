@@ -331,7 +331,7 @@
         }
         targetRects.attr('fill', (function(_this) {
           return function(d) {
-            return _this.color()(d);
+            return _this._color(d);
           };
         })(this)).transition().attr('width', attrs.width).attr('height', this.cellHeight()).attr('x', attrs.x).attr('y', attrs.y);
         if (!enter) {

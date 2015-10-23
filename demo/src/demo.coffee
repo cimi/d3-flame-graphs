@@ -67,3 +67,13 @@ d3.json "data/profile.json", (err, data) ->
         .zoomEnabled(true)
         .tooltip(tooltip)
         .render()
+
+  d3.select('#rasta')
+    .on 'click', () ->
+      rastaMode = (d) ->
+        cells = 600 / 20
+        console.log(cells)
+        return '#1E9600' if 0             <= d.depth < cells / 3
+        return '#FFF200' if cells / 3     <= d.depth < cells * 2 / 3
+        return '#FF0000' if cells * 2 / 3 <= d.depth < cells
+      flameGraph.color(rastaMode).render()

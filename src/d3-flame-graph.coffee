@@ -233,7 +233,7 @@ d3.flameGraph = (selector, root) ->
       targetRects = containers.selectAll('rect') if not enter
       targetRects = containers.append('rect') if enter
       targetRects
-        .attr('fill', (d) => @color()(d))
+        .attr('fill', (d) => @_color(d))
         .transition()
           .attr('width', attrs.width)
           .attr('height', @cellHeight())

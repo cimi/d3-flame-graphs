@@ -64,7 +64,7 @@ d3.flameGraphUtils =
       process(node, val)
       processChildren(node, val)
 
-d3.flameGraph = (selector, root) ->
+d3.flameGraph = (selector, root, debug = false) ->
 
   getClassAndMethodName = (fqdn) ->
     return "" if not fqdn
@@ -96,6 +96,15 @@ d3.flameGraph = (selector, root) ->
         'color'])
       @_ancestors = []
 
+      # enable logging only if explicitly specified
+      if debug
+        @console = window.console
+      else
+        @console =
+          log: ->
+          time: ->
+          timeEnd: ->
+
       # defaults
       @_size        = [1200, 800]
       @_cellHeight  = 20
@@ -121,9 +130,9 @@ d3.flameGraph = (selector, root) ->
           .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
 
       # initial processing of data
-      console.time('augment')
+      @console.time('augment')
       @original = d3.flameGraphUtils.augment(root, [0])
-      console.timeEnd('augment')
+      @console.timeEnd('augment')
       @root(@original)
 
     size: (size) ->
@@ -136,10 +145,10 @@ d3.flameGraph = (selector, root) ->
 
     root: (root) ->
       return @_root if not root
-      console.time('partition')
+      @console.time('partition')
       @_root = root
       @_data = d3.flameGraphUtils.partition(@_root)
-      console.timeEnd('partition')
+      @console.timeEnd('partition')
       @
 
     hide: (predicate, unhide = false) ->
@@ -180,7 +189,7 @@ d3.flameGraph = (selector, root) ->
 
     render: () ->
       throw new Error("No DOM element provided") if not @_selector
-      console.time('render')
+      @console.time('render')
 
       # reset size and scales
       @fontSize = (@cellHeight() / 10) * 0.4
@@ -224,9 +233,9 @@ d3.flameGraph = (selector, root) ->
       @_renderAncestors()._enableNavigation()   if @zoomEnabled()
       @_renderTooltip()                         if @tooltip()
 
-      console.timeEnd('render')
-      console.log("Processed #{@_data.length} items")
-      console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
+      @console.timeEnd('render')
+      @console.log("Processed #{@_data.length} items")
+      @console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
       @
 
     _renderNodes: (containers, attrs, enter = false) ->

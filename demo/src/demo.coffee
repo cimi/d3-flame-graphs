@@ -1,17 +1,9 @@
-# function that converts from a particular data format into the generic one
-# expected by the plugin
-window.debugging = true
-
 runnableVals = []
 convert = (rawData, valueFunc) ->
 
-  # timeElapsed = new Date()
-  # timeElapsed.setSeconds(value)
-  # timeFormat = countdown.DAYS | countdown.HOURS | countdown.MINUTES | countdown.SECONDS
   node =
     name: rawData.n,
     value: valueFunc(rawData),
-    # time: countdown(new Date(), timeElapsed, timeFormat)
     children: []
 
   # the a field is the list of children
@@ -34,7 +26,7 @@ d3.json "data/profile.json", (err, data) ->
   tooltip = (d) -> "#{d.name} <br /><br />
     #{d.value} samples<br />
     #{((d.value / profile.value) * 100).toFixed(2)}% of total"
-  flameGraph = d3.flameGraph('#d3-flame-graph', profile)
+  flameGraph = d3.flameGraph('#d3-flame-graph', profile, true)
     .size([1200, 600])
     .cellHeight(20)
     .zoomEnabled(true)
@@ -72,7 +64,6 @@ d3.json "data/profile.json", (err, data) ->
     .on 'click', () ->
       rastaMode = (d) ->
         cells = 600 / 20
-        console.log(cells)
         return '#1E9600' if 0             <= d.depth < cells / 3
         return '#FFF200' if cells / 3     <= d.depth < cells * 2 / 3
         return '#FF0000' if cells * 2 / 3 <= d.depth < cells

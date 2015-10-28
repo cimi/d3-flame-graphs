@@ -282,6 +282,9 @@ d3.flameGraph = (selector, root, debug = false) ->
         .selectAll('.node')
           .on 'mouseover', @tip.show
           .on 'mouseout', @tip.hide
+        .selectAll('.label')
+          .on 'mouseover', () -> console.log('x'); d3.event.preventDefault()
+          .on 'mouseout', () -> console.log('y'); d3.event.preventDefault()
       @
 
     _renderAncestors: () ->
@@ -322,11 +325,13 @@ d3.flameGraph = (selector, root, debug = false) ->
       @
 
     _enableNavigation: () ->
+      clickable = (d) => Math.round(@width() - @x(d.dx)) > 0 and d.children?.length
       @container
         .selectAll('.node')
+        .classed('clickable', (d) => clickable(d))
         .on 'click', (d) =>
           @tip.hide()
-          @zoom(d) if Math.round(@width() - @x(d.dx)) > 0
+          @zoom(d) if clickable(d)
       @container
         .selectAll('.ancestor')
         .on 'click', (d, idx) => @tip.hide(); @zoom(@_ancestors[idx])

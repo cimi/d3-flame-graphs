@@ -15,10 +15,13 @@ $itemHighlightColor: #FFD700;
   .label {
     font-family: Verdana;
     font-weight: lighter;
+    cursor: default;
   }
 
   .node {
-    cursor: pointer;
+    &.clickable, &.clickable .label {
+      cursor: pointer;
+    }
 
     /* root is not clickable */
     &.root {

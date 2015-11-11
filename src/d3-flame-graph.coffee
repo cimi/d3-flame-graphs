@@ -280,11 +280,11 @@ d3.flameGraph = (selector, root, debug = false) ->
       @container.call(@tip)
       @container
         .selectAll('.node')
-          .on 'mouseover', @tip.show
+          .on 'mouseover', (d) => @tip.show(d, d3.event.currentTarget)
           .on 'mouseout', @tip.hide
         .selectAll('.label')
-          .on 'mouseover', () -> console.log('x'); d3.event.preventDefault()
-          .on 'mouseout', () -> console.log('y'); d3.event.preventDefault()
+          .on 'mouseover', (d) => @tip.show(d, d3.event.currentTarget.parentNode)
+          .on 'mouseout', @tip.hide
       @
 
     _renderAncestors: () ->

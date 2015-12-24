@@ -11,4 +11,5 @@ deployment:
     tag: /v\d+\.\d+\.\d+.*/
     commands:
       - echo -e "$NPM_USERNAME\n$NPM_PASSWORD\n$EMAIL" | npm login
+      - gulp dist
       - npm publish

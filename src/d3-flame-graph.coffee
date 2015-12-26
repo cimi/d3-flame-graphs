@@ -161,7 +161,7 @@ d3.flameGraph = (selector, root, debug = false) ->
 
     zoom: (node) ->
       throw new Error("Zoom is disabled!") if not @zoomEnabled()
-      @tip.hide()
+      @tip.hide() if @tip
       if node in @_ancestors
         @_ancestors = @_ancestors.slice(0, @_ancestors.indexOf(node))
       else
@@ -330,11 +330,13 @@ d3.flameGraph = (selector, root, debug = false) ->
         .selectAll('.node')
         .classed('clickable', (d) => clickable(d))
         .on 'click', (d) =>
-          @tip.hide()
+          @tip.hide() if @tip
           @zoom(d) if clickable(d)
       @container
         .selectAll('.ancestor')
-        .on 'click', (d, idx) => @tip.hide(); @zoom(@_ancestors[idx])
+        .on 'click', (d, idx) =>
+          @tip.hide() if @tip
+          @zoom(@_ancestors[idx])
       @
 
     _generateAccessors: (accessors) ->

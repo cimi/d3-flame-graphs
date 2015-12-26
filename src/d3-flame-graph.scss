@@ -8,14 +8,17 @@ $itemBorderColor: #EEE;
 $itemHighlightColor: #FFD700;
 
 .flame-graph {
-
-  border: 1px solid $graphBorderColor;
   background-color: $graphBackgroundColor;
 
   .label {
     font-family: Verdana;
     font-weight: lighter;
     cursor: default;
+  }
+
+  .border-rect {
+    stroke: $graphBorderColor;
+    fill: none;
   }
 
   .node {

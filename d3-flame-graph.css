@@ -1,12 +1,16 @@
 .flame-graph {
-  border: 1px solid #0E0E0E;
   background-color: #FFF; }
   .flame-graph .label {
     font-family: Verdana;
-    font-weight: lighter; }
+    font-weight: lighter;
+    cursor: default; }
+  .flame-graph .border-rect {
+    stroke: #0E0E0E;
+    fill: none; }
   .flame-graph .node {
-    cursor: pointer;
     /* root is not clickable */ }
+    .flame-graph .node.clickable, .flame-graph .node.clickable .label {
+      cursor: pointer; }
     .flame-graph .node.root {
       cursor: auto;
       /* clicking the base node is disabled as it does not make sense to zoom on it */ }

@@ -118,17 +118,6 @@ d3.flameGraph = (selector, root, debug = false) ->
       @_tooltipEnabled = true
       @_zoomEnabled = true
 
-      # remove any previously existing svg
-      d3.select(@_selector).select('svg').remove()
-      # create main svg container
-      @container = d3.select(@_selector)
-        .append('svg')
-          .attr('class', 'flame-graph')
-          .attr('width', @_size[0])
-          .attr('height', @_size[1])
-        .append('g')
-          .attr('transform', "translate(#{@margin().left}, #{@margin().top})")
-
       # initial processing of data
       @console.time('augment')
       @original = d3.flameGraphUtils.augment(root, [0])
@@ -191,6 +180,8 @@ d3.flameGraph = (selector, root, debug = false) ->
       throw new Error("No DOM element provided") if not @_selector
       @console.time('render')
 
+      @_createContainer() if not @container
+
       # reset size and scales
       @fontSize = (@cellHeight() / 10) * 0.4
 
@@ -237,6 +228,30 @@ d3.flameGraph = (selector, root, debug = false) ->
       @console.log("Processed #{@_data.length} items")
       @console.log("Rendered #{@container.selectAll('.node')[0]?.length} elements")
       @
+
+    _createContainer: () ->
+      # remove any previously existing svg
+      d3.select(@_selector).select('svg').remove()
+      # create main svg container
+      svg = d3.select(@_selector)
+        .append('svg')
+          .attr('class', 'flame-graph')
+          .attr('width', @_size[0])
+          .attr('height', @_size[1])
+      # we set an offset based on the margin
+      offset = "translate(#{@margin().left}, #{@margin().top})"
+      # @container will hold all our nodes
+      @container = svg.append('g')
+          .attr('transform', offset)
+
+      # this rectangle draws the border around the flame graph
+      # has to be appended after the container so that the border is visible
+      # we also need to apply the same translation
+      svg.append('rect')
+        .attr('width', @_size[0] - (@_margin.left + @_margin.right))
+        .attr('height', @_size[1] - (@_margin.top + @_margin.bottom))
+        .attr('transform', offset)
+        .attr('class', 'border-rect')
 
     _renderNodes: (containers, attrs, enter = false) ->
       targetRects = containers.selectAll('rect') if not enter

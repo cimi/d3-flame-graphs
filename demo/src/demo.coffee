@@ -30,6 +30,7 @@ d3.json "data/profile.json", (err, data) ->
     .size([1200, 600])
     .cellHeight(20)
     .zoomEnabled(true)
+    .zoomAction((node, event) -> console.log(node, event))
     .tooltip(tooltip)
     .render()
 
@@ -57,6 +58,7 @@ d3.json "data/profile.json", (err, data) ->
         .size([1200, 600])
         .cellHeight(20)
         .zoomEnabled(true)
+        .zoomAction((node, event) -> console.log(node, event))
         .tooltip(tooltip)
         .render()
 

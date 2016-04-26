@@ -118,7 +118,7 @@ d3.flameGraph = (selector, root, debug = false) ->
         "rgb(#{r}, #{g}, #{b})"
       @_tooltipEnabled = true
       @_zoomEnabled = true
-      @_tooltipPlugin = d3.tip()
+      @_tooltipPlugin = d3.tip() if @_tooltipEnabled and d3.tip
 
       # initial processing of data
       @console.time('augment')
@@ -279,6 +279,7 @@ d3.flameGraph = (selector, root, debug = false) ->
       @
 
     _renderTooltip: () ->
+      return @ if not @_tooltipPlugin or not @_tooltipEnabled
       @tip = @_tooltipPlugin
         .attr('class', 'd3-tip')
         .html(@tooltip())

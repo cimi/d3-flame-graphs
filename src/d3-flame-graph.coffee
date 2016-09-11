@@ -23,7 +23,7 @@ d3.flameGraphUtils =
       children.push({ value: node.value - childSum, filler: true })
 
     children.forEach((child, idx) ->
-      d3.flameGraphUtils.augment(child, location.concat([idx])))
+      d3.flameGraphUtils.augment(child, location + "." + idx))
     node.level += children.reduce ((max, child) -> Math.max(child.level, max)), 0
     node.augmented = true
     node
@@ -208,7 +208,7 @@ d3.flameGraph = (selector, root, debug = false) ->
         text: (d) => @label(d) if d.name and @x(d.dx) > 40
       existingContainers = @container
         .selectAll('.node')
-        .data(data, (d) -> d.location.join("."))
+        .data(data, (d) -> d.location)
         .attr('class', 'node')
 
       # UPDATE
@@ -327,7 +327,7 @@ d3.flameGraph = (selector, root, debug = false) ->
       # JOIN
       ancestors = @container
         .selectAll('.ancestor')
-        .data(d3.layout.partition().nodes(ancestorData[0]), (d) -> d.location.join("."))
+        .data(d3.layout.partition().nodes(ancestorData[0]), (d) -> d.location)
       # UPDATE
       @_renderNodes ancestors, renderAncestor
 

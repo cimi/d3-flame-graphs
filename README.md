@@ -8,9 +8,7 @@ This is a d3.js plugin that renders flame graphs from hierarchical data.
 
 ## [See the demo!](http://cimi.github.io/d3-flame-graphs/)
 
-<a href="http://cimi.github.io/d3-flame-graphs/">
-![Flame Graph Representation](flame-graph-screenshot.png?raw=true "See the demo!")
-</a>
+[![Flame Graph Representation](flame-graph-screenshot.png?raw=true "See the demo!")](http://cimi.github.io/d3-flame-graphs/)
 
 ## Build status
 [![Circle CI](https://circleci.com/gh/cimi/d3-flame-graphs/tree/master.svg?style=svg)](https://circleci.com/gh/cimi/d3-flame-graphs/tree/master) [![npm version](https://badge.fury.io/js/d3-flame-graphs.svg)](https://badge.fury.io/js/d3-flame-graphs) [![bower version](https://badge.fury.io/bo/d3-flame-graphs.svg)](https://badge.fury.io/bo/d3-flame-graphs)

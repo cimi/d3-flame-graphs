@@ -1,4 +1,5 @@
 var gulp = require('gulp');
+var babel = require('gulp-babel');
 var coffee = require('gulp-coffee');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
@@ -9,12 +10,13 @@ var reload = browserSync.reload;
 var del = require('del');
 
 var paths = {
-  scripts:        ['src/**/*.coffee'],
-  styles:         ['src/**/*.scss'],
-  demoResources:  ['demo/**/*.*', 'dist/**/*.*', '!demo/src/**'],
-  demoScripts:    ['demo/src/**/*.coffee'],
-  dist:           'dist',
-  demoOut:        'build'
+  scripts: ['src/**/*.coffee'],
+  scriptsEs6: ['src/**/*.js'],
+  styles: ['src/**/*.scss'],
+  demoResources: ['demo/**/*.*', 'dist/**/*.*', '!demo/src/**'],
+  demoScripts: ['demo/src/**/*.coffee'],
+  dist: 'dist',
+  demoOut: 'build'
 };
 
 gulp.task('clean', function(cb) {
@@ -22,20 +24,20 @@ gulp.task('clean', function(cb) {
 });
 
 // Create the distributable artifacts of the plugin.
-gulp.task('dist:main', function () {
-  return gulp.src(paths.scripts)
-    .pipe(coffee())
+gulp.task('dist:main', function() {
+  return gulp.src(paths.scriptsEs6)
+    .pipe(babel({ presets: ['env'] }))
     .pipe(concat('d3-flame-graph.js'))
     .pipe(gulp.dest(paths.dist))
 });
-gulp.task('dist:min', function () {
-  return gulp.src(paths.scripts)
-    .pipe(coffee())
+gulp.task('dist:min', function() {
+  return gulp.src(paths.scriptsEs6)
+    .pipe(babel({ presets: ['env'] }))
     .pipe(uglify())
     .pipe(concat('d3-flame-graph.min.js'))
     .pipe(gulp.dest(paths.dist));
 });
-gulp.task('dist:styles', function () {
+gulp.task('dist:styles', function() {
   return gulp.src(paths.styles)
     .pipe(sass().on('error', sass.logError))
     .pipe(gulp.dest(paths.dist))
@@ -62,10 +64,10 @@ gulp.task('demo-copy', ['demo-scripts'], function() {
 
 // Rerun the task when a file changes
 gulp.task('demo-watch', ['demo-copy'], function() {
-  gulp.watch(paths.scripts,         ['demo-copy']);
-  gulp.watch(paths.styles,          ['demo-copy']);
-  gulp.watch(paths.demoResources,   ['demo-copy']);
-  gulp.watch(paths.demoScripts,     ['demo-copy']);
+  gulp.watch(paths.scripts, ['demo-copy']);
+  gulp.watch(paths.styles, ['demo-copy']);
+  gulp.watch(paths.demoResources, ['demo-copy']);
+  gulp.watch(paths.demoScripts, ['demo-copy']);
 });
 
 gulp.task('serve', ['demo-watch'], function() {

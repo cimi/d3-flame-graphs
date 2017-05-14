@@ -2,3 +2,5 @@ demo/data/*.json
 build/
 dist/
 node_modules/
+/.idea
+/*.iml

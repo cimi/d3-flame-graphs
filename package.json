@@ -5,7 +5,7 @@
   "repository": "cimi/d3-flame-graphs",
   "main": "dist/d3-flame-graph.js",
   "scripts": {
-    "test": "mocha --require coffee-script --compilers coffee:coffee-script/register --recursive ./test",
+    "test": "mocha --require babel-register --recursive ./test",
     "publish-npm": "publish"
   },
   "keywords": [
@@ -28,6 +28,8 @@
   },
   "devDependencies": {
     "babel-preset-env": "^1.4.0",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-register": "^6.24.1",
     "browser-sync": "^2.8.2",
     "chai": "^3.3.0",
     "chai-things": "^0.2.0",

@@ -1,3 +1,5 @@
+This is an experimental variant of d3-flame-graphs that builds on d3 v4 and ES6 modules. More details in [issue #64](https://github.com/cimi/d3-flame-graphs/issues/64) and [PR #65](https://github.com/cimi/d3-flame-graphs/pull/65), thank you [@vlascik](https://github.com/vlascik). Original documentation below.
+
 ## What is this?
 
 This is a d3.js plugin that renders flame graphs from hierarchical data.

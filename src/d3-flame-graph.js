@@ -78,10 +78,10 @@ const FlameGraphUtils = {
     let root = hierarchy(data)
       .sum(d => d.data ? d.data.value : d.value)
       .sort((a, b) => {
-        if (a.filler) {
+        if (a.filler || a.data.filler) {
           return 1;  // move fillers to the right
         }
-        if (b.filler) {
+        if (b.filler || b.data.filler) {
           return -1; // move fillers to the right
         }
         return a.data.name.localeCompare(b.data.name);

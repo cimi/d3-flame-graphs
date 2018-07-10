@@ -67,7 +67,7 @@ The data the flame graph is rendered from. It expects nested data in the form:
 }
 ```
 
-The data is augmented with 'filler nodes' by the plugin, due to the fact that D3 considers the value of a node to be the sum of its children rather than its explicit value. More details in [this issue](https://github.com/mbostock/d3/pull/574). This should be transparent to clients as the filler node augmentation is done internally.
+The data is augmented with 'filler nodes' by the plugin, due to the fact that D3 considers the value of a node to be the sum of its children rather than its explicit value. More details in [this issue](https://github.com/mbostock/d3/pull/574). This should be transparent to clients as the filler node augmentation is done internally. Because of the filler node augmentation, __the children property needs to be defined, even if the array is empty.__
 
 <a href="#zoomEnabled">#</a> flameGraph.__zoomEnabled__(_enabled_)
 
